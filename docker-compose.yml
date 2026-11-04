@@ -68,6 +68,14 @@ services:
     environment:
       <<: *conexiones
 
+  reservas:
+    <<: *servicio
+    build:
+      context: .
+      dockerfile: services/reservas/Dockerfile
+    environment:
+      <<: *conexiones
+
   gateway:
     build:
       context: .

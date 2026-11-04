@@ -22,6 +22,7 @@ HTTP_POR_CODIGO = {
     "prohibido": 403,
     "no_encontrado": 404,
     "conflicto": 409,
+    "no_disponible": 503,
 }
 
 
