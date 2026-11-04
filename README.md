@@ -10,17 +10,34 @@ Contratos de mensajes, saga y estados: [docs/arquitectura.md](docs/arquitectura.
 
 Hay dos sistemas en la misma web: clientes (`/`) e interno (`/interno`).
 
-![Página de un evento para clientes, con sectores, precios y cupos disponibles](docs/capturas/evento.jpg)
-*Página de un evento: el cliente elige sector y cantidad, y ve el total antes de reservar.*
+### Sistema de clientes
 
-![Mis entradas en el celular, con el código QR de cada entrada](docs/capturas/entradas-movil.jpg)
+![Portada con los próximos eventos en tarjetas con forma de entrada](docs/capturas/portada.png)
+*Portada: los próximos eventos a la venta.*
+
+![Página de un evento con sectores, precios, cupos disponibles y el total](docs/capturas/evento.png)
+*Evento: el cliente elige sector y cantidad, y ve el total antes de reservar.*
+
+![Pantalla de pago con el resumen de la reserva y la cuenta regresiva](docs/capturas/pago.png)
+*Pago simulado: los cupos quedan apartados por 10 minutos.*
+
+<img src="docs/capturas/entradas-movil.png" alt="Mis entradas en el celular, con el código QR de cada entrada" width="320">
+
 *Mis entradas en el celular: cada entrada tiene su QR y su estado.*
 
-![Lista de eventos del sistema interno, con cupos apartados o vendidos](docs/capturas/interno-eventos.jpg)
-*Sistema interno: el organizador ve los cupos apartados o vendidos por sector y los ingresos potenciales.*
+### Sistema interno
 
-![Control de entradas en la puerta, con el resultado al leer un código](docs/capturas/puerta.jpg)
-*Control de la puerta: el validador lee o pega el código y ve si la entrada puede pasar.*
+![Lista de eventos del organizador con cupos apartados o vendidos e ingresos potenciales](docs/capturas/interno-eventos.png)
+*Eventos: el organizador ve lo apartado o vendido por sector y los ingresos potenciales.*
+
+![Formulario para crear un evento con sus sectores](docs/capturas/interno-nuevo-evento.png)
+*Nuevo evento: se crea en borrador y se publica cuando está listo.*
+
+![Control de la puerta aceptando una entrada válida](docs/capturas/puerta-valida.png)
+*Puerta: una entrada válida puede pasar.*
+
+![Control de la puerta rechazando una entrada ya usada](docs/capturas/puerta-usada.png)
+*Puerta: un QR ya usado se rechaza e indica cuándo se usó.*
 
 ## Demo
 
