@@ -234,7 +234,7 @@ def registrar_saga(bus, sesiones: Sesiones) -> None:
 
     @bus.al_recibir("pago.aprobado")
     async def al_aprobar_pago(datos: dict) -> None:
-        resultado = ResultadoDePago.model_validate(datos, extra="ignore")
+        resultado = ResultadoDePago.model_validate(datos)
         async with sesiones() as sesion:
             reserva = await _transicion(sesion, resultado.reserva_id, "PAGANDO", "CONFIRMADA")
             if reserva:
@@ -254,7 +254,7 @@ def registrar_saga(bus, sesiones: Sesiones) -> None:
 
     @bus.al_recibir("pago.rechazado")
     async def al_rechazar_pago(datos: dict) -> None:
-        resultado = ResultadoDePago.model_validate(datos, extra="ignore")
+        resultado = ResultadoDePago.model_validate(datos)
         async with sesiones() as sesion:
             reserva = await _transicion(sesion, resultado.reserva_id, "PAGANDO", "RECHAZADA")
             if reserva:

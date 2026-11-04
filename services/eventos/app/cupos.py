@@ -79,7 +79,7 @@ def registrar_cupos(bus, sesiones: Sesiones) -> None:
 
     @bus.al_recibir("reserva.cancelada")
     async def al_cancelar_reserva(datos: dict) -> None:
-        cancelada = ReservaCancelada.model_validate(datos, extra="ignore")
+        cancelada = ReservaCancelada.model_validate(datos)
         async with sesiones() as sesion:
             # Si aún no hay apartado, deja una marca: un apartar_cupos atrasado encontrará la
             # reserva cancelada y no tomará cupos que nadie liberaría después.

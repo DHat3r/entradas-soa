@@ -76,6 +76,34 @@ services:
     environment:
       <<: *conexiones
 
+  pagos:
+    <<: *servicio
+    build:
+      context: .
+      dockerfile: services/pagos/Dockerfile
+    environment:
+      <<: *conexiones
+
+  entradas:
+    <<: *servicio
+    build:
+      context: .
+      dockerfile: services/entradas/Dockerfile
+    environment:
+      <<: *conexiones
+      QR_SECRET: ${QR_SECRET:?falta QR_SECRET}
+
+  notificaciones:
+    <<: *servicio
+    build:
+      context: .
+      dockerfile: services/notificaciones/Dockerfile
+    environment:
+      <<: *conexiones
+      SMTP_HOST: mailpit
+      SMTP_PUERTO: "1025"
+      CORREO_REMITENTE: entradas@taquilla.dev
+
   gateway:
     build:
       context: .
@@ -88,6 +116,15 @@ services:
       RABBITMQ_URL: amqp://${RABBITMQ_USER:?falta RABBITMQ_USER}:${RABBITMQ_PASSWORD:?falta RABBITMQ_PASSWORD}@rabbitmq:5672/
       JWT_SECRET: ${JWT_SECRET:?falta JWT_SECRET}
       COOKIE_SECURE: ${COOKIE_SECURE:-true}
+
+  web:
+    build: ./frontend
+    restart: on-failure:5
+    depends_on:
+      gateway:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${WEB_PORT:-8080}:8080"
 
 volumes:
   postgres-data:
