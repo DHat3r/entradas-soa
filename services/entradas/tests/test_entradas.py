@@ -176,4 +176,6 @@ async def test_listar_mias_trae_las_propias_con_qr(bus):
 
     assert len(mias) == 2
     assert mias[0]["qr"].startswith("data:image/svg+xml")
+    validacion = await bus.llamar("validar", {"codigo": mias[0]["codigo"]}, PUERTA)
+    assert validacion["resultado"] == "valida"
     assert ajenas == []

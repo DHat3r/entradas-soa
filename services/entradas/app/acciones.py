@@ -38,7 +38,7 @@ def _a_dict(entrada: Entrada) -> dict:
 def registrar_acciones(bus, sesiones: Sesiones, qr_secret: str) -> None:
     @bus.al_recibir("reserva.confirmada")
     async def al_confirmar_reserva(datos: dict) -> None:
-        reserva = ReservaConfirmada.model_validate(datos, extra="ignore")
+        reserva = ReservaConfirmada.model_validate(datos)
         filas = [
             {
                 "id": uuid.uuid4(),
@@ -88,10 +88,12 @@ def registrar_acciones(bus, sesiones: Sesiones, qr_secret: str) -> None:
                     .order_by(Entrada.emitida_en.desc(), Entrada.numero)
                 )
             ).all()
-        return [
-            {**_a_dict(e), "qr": qr_como_data_uri(generar_codigo(e.id, qr_secret))}
-            for e in entradas
-        ]
+        respuesta = []
+        for entrada in entradas:
+            # El texto del código sirve de respaldo si en la puerta no se puede escanear el QR.
+            codigo = generar_codigo(entrada.id, qr_secret)
+            respuesta.append({**_a_dict(entrada), "codigo": codigo, "qr": qr_como_data_uri(codigo)})
+        return respuesta
 
     @bus.accion("validar")
     async def validar(datos: dict, identidad) -> dict:
