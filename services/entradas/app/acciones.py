@@ -41,7 +41,9 @@ def registrar_acciones(bus, sesiones: Sesiones, qr_secret: str) -> None:
         reserva = ReservaConfirmada.model_validate(datos)
         filas = [
             {
-                "id": uuid.uuid4(),
+                # Determinista: si este commit falla y el evento se reentrega, los QR que ya
+                # salieron en el correo siguen siendo válidos.
+                "id": uuid.uuid5(reserva.reserva_id, str(numero)),
                 "reserva_id": reserva.reserva_id,
                 "numero": numero,
                 "cliente_id": reserva.cliente_id,

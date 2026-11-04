@@ -31,6 +31,11 @@ services:
 
   rabbitmq:
     image: rabbitmq:4-management-alpine
+    # Nombre fijo y volumen: RabbitMQ guarda los datos según el nombre del nodo. Sin esto, recrear
+    # el contenedor perdería los mensajes durables y una compra en curso quedaría detenida.
+    hostname: rabbitmq
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:?falta RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?falta RABBITMQ_PASSWORD}
@@ -128,3 +133,4 @@ services:
 
 volumes:
   postgres-data:
+  rabbitmq-data:

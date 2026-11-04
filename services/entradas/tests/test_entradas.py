@@ -179,3 +179,24 @@ async def test_listar_mias_trae_las_propias_con_qr(bus):
     validacion = await bus.llamar("validar", {"codigo": mias[0]["codigo"]}, PUERTA)
     assert validacion["resultado"] == "valida"
     assert ajenas == []
+
+
+async def test_si_el_commit_falla_tras_publicar_la_reentrega_genera_los_mismos_codigos(bus):
+    evento = confirmada(cantidad=2)
+    publicar_real = bus.publicar
+
+    async def publicar_y_luego_fallar(tipo, datos):
+        await publicar_real(tipo, datos)
+        raise ConnectionError("cae justo después de publicar")
+
+    bus.publicar = publicar_y_luego_fallar
+    with pytest.raises(ConnectionError):
+        await bus.entregar("reserva.confirmada", evento)
+
+    bus.publicar = publicar_real
+    await bus.entregar("reserva.confirmada", evento)
+
+    primero, segundo = bus.publicados
+    assert primero[1]["entradas"] == segundo[1]["entradas"]
+    codigo = primero[1]["entradas"][0]["codigo"]
+    assert (await bus.llamar("validar", {"codigo": codigo}, PUERTA))["resultado"] == "valida"
