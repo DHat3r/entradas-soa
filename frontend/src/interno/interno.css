@@ -1,0 +1,379 @@
+/* Sistema interno: tema oscuro de herramienta de trabajo, con la misma marca que clientes. */
+.in-pagina {
+  --fondo: #16140f;
+  --superficie: #211e17;
+  --texto: #f6f1e7;
+  --texto-suave: #b4ac9b;
+  --borde: #3a352a;
+
+  min-height: 100vh;
+  background: var(--fondo);
+  color: var(--texto);
+}
+
+/* Si la página envuelve un aviso de acceso denegado, el aviso necesita aire. */
+.in-envoltura > .aviso {
+  margin: 1.5rem;
+}
+
+/* ── Disposición: barra lateral fija; en pantallas pequeñas pasa a cabecera ── */
+.in-barra {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.25rem 1rem;
+  overflow-y: auto;
+  background: var(--superficie);
+  border-right: 1px solid var(--borde);
+}
+
+.in-marca {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: inherit;
+  font: 800 1.2rem var(--titulos);
+  letter-spacing: -0.03em;
+  text-decoration: none;
+}
+
+.in-marca img {
+  width: 28px;
+  height: 28px;
+}
+
+.in-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.in-nav a {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 0.75rem;
+  border-radius: var(--radio);
+  color: var(--texto-suave);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.in-nav a:hover {
+  color: var(--texto);
+  background: var(--fondo);
+}
+
+.in-nav a[aria-current="page"] {
+  color: var(--texto);
+  background: var(--fondo);
+  box-shadow: inset 3px 0 0 var(--bermellon);
+}
+
+.in-usuario {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: auto;
+  min-width: 0;
+}
+
+.in-usuario span {
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.in-usuario .boton {
+  width: 100%;
+}
+
+.in-contenido {
+  min-width: 0;
+  margin-left: 220px;
+  padding: 2rem 2.5rem;
+}
+
+@media (max-width: 759px) {
+  .in-barra {
+    position: static;
+    width: auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1rem;
+    padding: 0.75rem 1rem;
+    overflow: visible;
+    border-right: 0;
+    border-bottom: 1px solid var(--borde);
+  }
+
+  .in-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  .in-usuario {
+    grid-auto-flow: column;
+    align-items: center;
+    margin-top: 0;
+    margin-left: auto;
+  }
+
+  .in-usuario .boton {
+    width: auto;
+  }
+
+  .in-contenido {
+    margin-left: 0;
+    padding: 1.25rem 1rem;
+  }
+}
+
+/* ── Encabezados, tarjetas y listas ──────────────────────────── */
+.in-encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.in-encabezado h1 {
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-weight: 800;
+}
+
+.in-lista {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.in-tarjeta {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+  padding: 1.25rem;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  background: var(--superficie);
+}
+
+.in-tarjeta h2 {
+  font-size: 1.35rem;
+  overflow-wrap: anywhere;
+}
+
+.in-evento-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.in-datos,
+.in-ayuda {
+  color: var(--texto-suave);
+  font-size: 0.95rem;
+}
+
+.in-etiqueta-publicado {
+  background: #1f4d37;
+  color: #bfe8d2;
+}
+
+.in-etiqueta-borrador {
+  background: #4a3d14;
+  color: #f3dc9b;
+}
+
+.in-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+/* ── Tablas: el contenedor hace scroll horizontal en móvil ───── */
+.in-tabla-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+}
+
+.in-tabla-wrap table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.in-tabla-wrap th,
+.in-tabla-wrap td {
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid var(--borde);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.in-tabla-wrap thead th {
+  color: var(--texto-suave);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.in-tabla-wrap tbody th {
+  font-weight: 600;
+}
+
+.in-tabla-wrap tfoot th,
+.in-tabla-wrap tfoot td {
+  border-top: 2px solid var(--borde);
+  border-bottom: 0;
+  font-weight: 700;
+}
+
+.in-rotulo {
+  display: block;
+  color: var(--texto-suave);
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+/* ── Formularios sobre tema oscuro ───────────────────────────── */
+.in-tarjeta .campo input,
+.in-tarjeta .campo select,
+.in-tarjeta .campo textarea {
+  background: var(--fondo);
+}
+
+.in-sectores {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.in-sector {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+  margin: 0;
+  padding: 1rem;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+}
+
+.in-sector legend {
+  padding: 0 0.4rem;
+  font-weight: 700;
+}
+
+.in-sector-campos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem;
+}
+
+.in-sector .boton {
+  justify-self: start;
+}
+
+/* ── Acceso del sistema interno ──────────────────────────────── */
+.in-centrado {
+  display: grid;
+  place-items: center;
+  padding: 1.5rem 1rem;
+}
+
+.in-acceso {
+  width: min(400px, 100%);
+}
+
+.in-acceso h1 {
+  font-size: 1.75rem;
+  font-weight: 800;
+}
+
+/* ── Puerta: validación de entradas ──────────────────────────── */
+.in-puerta {
+  display: grid;
+  gap: 1.5rem;
+  max-width: 720px;
+}
+
+.in-puerta h1 {
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-weight: 800;
+}
+
+.campo.in-campo-grande {
+  font-size: 1.1rem;
+}
+
+.campo.in-campo-grande input {
+  min-height: 72px;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.in-panel {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  min-height: 180px;
+  padding: 1.5rem;
+  border: 2px solid var(--borde);
+  border-radius: var(--radio);
+  background: var(--superficie);
+}
+
+.in-panel > div {
+  min-width: 0;
+}
+
+.in-panel h2 {
+  font-size: clamp(1.6rem, 6vw, 2.4rem);
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.in-panel p {
+  font-size: 1.15rem;
+}
+
+.in-panel-espera {
+  justify-content: center;
+  color: var(--texto-suave);
+}
+
+.in-panel-ok {
+  background: #16452f;
+  border-color: #3fa374;
+  color: #e3f6ec;
+}
+
+.in-panel-error {
+  background: #4a1d15;
+  border-color: #e0664f;
+  color: #fde4dc;
+}
+
+.in-simbolo {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 12%);
+  font-size: 2.5rem;
+  font-weight: 800;
+}

@@ -1,13 +1,45 @@
-import { Route, Routes } from "react-router-dom";
-import { RequiereRol } from "../lib/sesion";
+import { Navigate, Route, Routes } from "react-router-dom";
+import { RequiereRol, useSesion } from "../lib/sesion";
+import { EventosInternoPage } from "./EventosInternoPage";
+import { IngresarInternoPage } from "./IngresarInternoPage";
+import { LayoutInterno } from "./LayoutInterno";
+import { NuevoEventoPage } from "./NuevoEventoPage";
+import { PuertaPage } from "./PuertaPage";
 
-/** El sistema interno se implementa en el siguiente paso. */
+/** El organizador ve sus eventos; el validador va directo a la puerta. */
+function InicioInterno() {
+  const { usuario } = useSesion();
+  if (usuario?.rol === "validador") return <Navigate to="/interno/puerta" replace />;
+  return <EventosInternoPage />;
+}
+
+/** Rutas relativas a /interno/*, porque App.tsx monta este componente ahí. */
 export function RutasInternas() {
   return (
-    <RequiereRol roles={["organizador", "validador"]} ingreso="/ingresar">
-      <Routes>
-        <Route index element={<p className="vacio">Sistema interno en construcción.</p>} />
-      </Routes>
-    </RequiereRol>
+    <Routes>
+      <Route path="ingresar" element={<IngresarInternoPage />} />
+      <Route
+        element={
+          // El div da el fondo oscuro también al aviso de acceso denegado que RequiereRol muestra sin barra.
+          <div className="in-pagina in-envoltura">
+            <RequiereRol roles={["organizador", "validador"]} ingreso="/interno/ingresar">
+              <LayoutInterno />
+            </RequiereRol>
+          </div>
+        }
+      >
+        <Route index element={<InicioInterno />} />
+        <Route
+          path="eventos/nuevo"
+          element={
+            <RequiereRol roles={["organizador"]} ingreso="/interno/ingresar">
+              <NuevoEventoPage />
+            </RequiereRol>
+          }
+        />
+        <Route path="puerta" element={<PuertaPage />} />
+        <Route path="*" element={<p className="vacio">No encontramos esta página.</p>} />
+      </Route>
+    </Routes>
   );
 }
