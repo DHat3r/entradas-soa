@@ -28,7 +28,9 @@ tablas de otro. Si necesita un dato ajeno, lo pide por mensaje o guarda una copi
 | `validador` | Seed | Solo validar entradas en la puerta |
 
 El gateway valida el JWT y agrega la identidad al mensaje. Los servicios confían en esa identidad
-porque RabbitMQ no publica su puerto AMQP fuera de la red de Docker. Ningún servicio acepta un
+porque RabbitMQ no publica su puerto AMQP fuera de la red de Docker. Su panel web sí queda abierto
+en `127.0.0.1` para revisar colas: quien tenga acceso a esa máquina y a sus credenciales podría publicar
+mensajes con una identidad falsa, así que en producción habría que cerrarlo. Ningún servicio acepta un
 `usuario_id` que venga del cuerpo de la petición.
 
 ## Formatos de mensaje
@@ -55,6 +57,7 @@ Cola durable `rpc.<servicio>`. El cliente usa `reply_to` y `correlation_id`, y e
 | `prohibido` | 403 |
 | `no_encontrado` | 404 |
 | `conflicto` | 409 |
+| Demasiados intentos de login o registro (`demasiados_intentos`, lo responde el gateway) | 429 |
 | `no_disponible` | 503 |
 | Sin respuesta en 5 s | 504 |
 
@@ -64,7 +67,9 @@ el log del servicio.
 ### Eventos
 
 Exchange durable `entradas.eventos` de tipo `topic`. Cada servicio consume desde una cola quorum
-`<servicio>.eventos`, con `x-delivery-limit: 5`.
+`<servicio>.eventos`. Si un consumidor falla, espera (1, 2, 4... hasta 30 s) y republica el mensaje
+con el encabezado `x-intentos`; al décimo intento lo descarta y lo deja en el log. La cuenta es propia
+porque `x-delivery-limit` no cuenta los `nack` con `requeue` en RabbitMQ 4.
 
 ```json
 {"id": "uuid", "tipo": "reserva.confirmada", "ocurrido_en": "2026-11-04T12:00:00Z", "datos": {}}
@@ -130,18 +135,33 @@ sequenceDiagram
 stateDiagram-v2
     [*] --> CREADA
     CREADA --> PENDIENTE_PAGO: cupos apartados
-    CREADA --> CANCELADA: sin cupos o sin respuesta
+    CREADA --> CANCELADA: sin cupos, sin respuesta o abandonada
     PENDIENTE_PAGO --> PAGANDO: pagar
     PENDIENTE_PAGO --> VENCIDA: pasan 10 minutos
     PAGANDO --> CONFIRMADA: pago.aprobado
     PAGANDO --> RECHAZADA: pago.rechazado
 ```
 
-Cada transición es un `UPDATE ... WHERE estado = <esperado>`. Si no afecta filas, otro proceso ya
-la hizo y el mensaje se ignora. Eso resuelve la carrera entre pagar y vencer, y los mensajes repetidos.
+Cada transición bloquea la fila con `SELECT ... FOR UPDATE`, comprueba el estado esperado y recién
+ahí lo cambia. Si el estado ya es otro, otro proceso hizo la transición y el mensaje se ignora. Así se
+resuelven los mensajes repetidos.
 
-Una reserva en `PAGANDO` no vence: `pago.solicitado` está en una cola durable y se procesará cuando
-`pagos` vuelva, así que no puede llegar un pago aprobado sobre una reserva ya liberada.
+No sirve un `UPDATE ... WHERE estado = 'PAGANDO'`: en READ COMMITTED, si la versión visible de la fila
+no cumple el `WHERE`, PostgreSQL no espera el bloqueo y afecta 0 filas, y un pago que llegara antes del
+commit de `pagar` se perdería.
+
+La carrera entre pagar y vencer se resuelve con `vence_en`: `pagar` exige que el plazo siga vigente y
+el vencimiento solo toma reservas con el plazo cumplido, saltando con `SKIP LOCKED` las filas ocupadas.
+
+Una reserva en `PAGANDO` no vence, así que no puede llegar un pago aprobado sobre una reserva ya
+liberada.
+
+### Reparación
+
+Si un mensaje agota sus intentos o el broker pierde datos, una reserva podría quedar detenida. Cada
+30 segundos, `reservas` busca las que llevan más de 2 minutos en `PAGANDO`, o `CONFIRMADA` sin que haya
+llegado `entradas.emitidas`, y reenvía el paso. Repetir es seguro: `pagos` conserva su resultado y
+`entradas` no emite dos veces.
 
 ### Eventos publicados
 
@@ -152,7 +172,7 @@ Una reserva en `PAGANDO` no vence: `pago.solicitado` está en una cola durable y
 | `pago.rechazado` | pagos | reservas | `reserva_id, pago_id` |
 | `reserva.confirmada` | reservas | entradas | `reserva_id, cliente_id, cliente_correo, evento_id, evento_nombre, sector_nombre, cantidad` |
 | `reserva.cancelada` | reservas | eventos | `reserva_id, sector_id, motivo` (`rechazada`, `vencida`, `error`) |
-| `entradas.emitidas` | entradas | notificaciones | `reserva_id, cliente_correo, evento_nombre, sector_nombre, entradas[{id, codigo}]` |
+| `entradas.emitidas` | entradas | notificaciones, reservas | `reserva_id, cliente_correo, evento_nombre, sector_nombre, entradas[{id, codigo}]` |
 
 ## Reglas que no se pueden romper
 
@@ -171,7 +191,11 @@ deja un apartado ya liberado y sin cantidad, y ese pedido se rechaza.
 
 **Publicar antes del commit.** Cada transición de la saga publica su evento dentro de la transacción.
 Si publicar falla, se revierte y RabbitMQ reintenta. Si la respuesta llega antes del commit, su
-`UPDATE` espera el bloqueo de la fila y luego ve el estado nuevo.
+`SELECT ... FOR UPDATE` espera el bloqueo de la fila y luego lee el estado nuevo.
+
+**Códigos estables.** El id de una entrada se deriva de la reserva y su número. Si el commit falla
+después de publicar, la reentrega genera los mismos códigos y el QR que ya salió por correo sigue
+siendo válido.
 
 **El precio lo pone el servidor.** `reservas` calcula el monto con el precio que devuelve `eventos`.
 Los montos son enteros en pesos chilenos.
@@ -186,7 +210,8 @@ firma HMAC, así que un código inventado o alterado se rechaza sin ir a la base
 
 El gateway guarda el JWT en una cookie `httpOnly` con `SameSite=Strict`: JavaScript no puede leerla
 (protege de XSS) y el navegador no la envía desde otros sitios (protege de CSRF). También acepta
-`Authorization: Bearer` para Swagger y clientes que no son navegadores. La web y la API comparten
+`Authorization: Bearer` para clientes que no son navegadores. El token no viaja en el cuerpo de la
+respuesta de login: esos clientes lo toman de la cabecera `Set-Cookie`. La web y la API comparten
 origen porque nginx hace de proxy de `/api`.
 
 ## Límites conocidos
@@ -194,11 +219,16 @@ origen porque nginx hace de proxy de `/api`.
 - **Sin *outbox*.** Si un servicio cae justo después de publicar y antes del commit, el evento ya
   salió pero el estado no cambió. Al procesar un mensaje entrante se recupera solo, porque RabbitMQ
   lo reentrega. En `pagar` no: la reserva sigue pendiente, el resultado del pago se ignora y el cupo
-  se libera al vencer.
+  se libera al vencer. `pagos` conserva ese resultado, así que un nuevo intento de pagar esa reserva
+  recibe el mismo.
 - **Sin límite de reservas por cliente.** Alguien podría apartar cupos una y otra vez sin pagar;
   cada reserva se limita a 6 entradas y vence en 10 minutos.
-- **Sin cola de mensajes fallidos.** Tras 5 entregas fallidas, RabbitMQ descarta el mensaje y solo
-  queda el error en el log.
-- **Límite de intentos de login en memoria.** Vale por instancia del gateway y se reinicia con ella.
+- **Sin cola de mensajes fallidos.** Al décimo intento, un evento se descarta y solo queda en el log.
+  La reparación recupera los pasos de pago y emisión; el correo de las entradas no se reenvía, pero
+  el cliente las ve en "Mis entradas".
+- **Límite de intentos de login y registro en memoria.** Vale por instancia del gateway y se reinicia
+  con ella.
+- **El registro revela qué correos existen.** Responde 409 si el correo ya está; el login sí responde
+  igual en ambos casos.
 - **Pago simulado.** No hay pasarela real ni reembolsos.
 - **Validación sin separar por evento.** Un validador puede validar entradas de cualquier evento, y un organizador también las de eventos ajenos. El código del QR garantiza que la entrada es auténtica, no que sea de ese evento.

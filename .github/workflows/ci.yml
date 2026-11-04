@@ -17,7 +17,7 @@ jobs:
           python-version: "3.14"
           cache: pip
       - name: Instalar ruff
-        run: pip install ruff
+        run: pip install ruff==0.17.3
       - name: Revisar estilo y errores
         run: ruff check .
       - name: Revisar formato

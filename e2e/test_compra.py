@@ -144,7 +144,7 @@ def test_pago_rechazado_libera_el_cupo_y_no_emite_entradas(organizador, comprado
 
 
 def test_compras_simultaneas_no_sobrevenden(organizador, comprador):
-    evento = crear_evento(organizador, capacidad=5)
+    evento = crear_evento(organizador, capacidad=10)
     sector_id = evento["sectores"][0]["id"]
 
     async def comprar_todos():
@@ -154,14 +154,14 @@ def test_compras_simultaneas_no_sobrevenden(organizador, comprador):
             return await asyncio.gather(
                 *(
                     cliente.post("/reservas", json={"sector_id": sector_id, "cantidad": 1})
-                    for _ in range(25)
+                    for _ in range(50)
                 )
             )
 
     estados = [r.status_code for r in asyncio.run(comprar_todos())]
 
-    assert estados.count(201) == 5
-    assert estados.count(409) == 20
+    assert estados.count(201) == 10
+    assert estados.count(409) == 40
     assert disponibles(evento["id"]) == 0
 
 
