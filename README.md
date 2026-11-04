@@ -77,6 +77,8 @@ La base parte vacía. Para ver el flujo de compra, entra como organizador, crea 
 
 > **Advertencia:** los valores de `.env.example` son solo para desarrollo. Fuera de tu equipo cambia `JWT_SECRET`, `QR_SECRET`, las contraseñas de PostgreSQL y RabbitMQ, y `SEED_PASSWORD`. En local `COOKIE_SECURE` va en `false` porque no hay HTTPS; si el sitio se sirve con HTTPS, déjalo en `true`.
 
+RabbitMQ y PostgreSQL guardan sus credenciales en sus volúmenes en el primer arranque. Si cambias esas contraseñas en `.env` después, recrea los volúmenes con `docker compose down -v`, lo que también borra los datos.
+
 ## Tests
 
 Para los tests de Python hay que levantar PostgreSQL y RabbitMQ, porque algunas suites usan las dependencias reales:
@@ -126,15 +128,15 @@ Cantidad de tests por carpeta, contada con `python -m pytest --collect-only -q` 
 | `libs/mensajeria` | 11 |
 | `services/auth` | 12 |
 | `services/gateway` | 20 |
-| `services/eventos` | 30 |
-| `services/reservas` | 28 |
+| `services/eventos` | 31 |
+| `services/reservas` | 30 |
 | `services/pagos` | 7 |
 | `services/entradas` | 18 |
-| `services/notificaciones` | 6 |
-| **Subtotal Python** | **132** |
+| `services/notificaciones` | 7 |
+| **Subtotal Python** | **136** |
 | `e2e` (necesita el stack) | 6 |
-| `frontend` (Vitest) | 16 |
-| **Total** | **154** |
+| `frontend` (Vitest) | 17 |
+| **Total** | **159** |
 
 `libs/basedatos` no tiene tests propios.
 
@@ -194,7 +196,7 @@ sequenceDiagram
 - **Descuento atómico de cupos:** el `UPDATE` solo descuenta si hay disponibles, así que no se puede vender de más. La prueba e2e lanza 50 compras simultáneas por 10 cupos contra el stack real y comprueba que solo 10 se aprueban.
 - **Idempotencia de mensajes:** RabbitMQ entrega al menos una vez. Cada transición bloquea la fila y comprueba el estado esperado, y la tabla de apartados usa la reserva como clave primaria, así que un mensaje repetido no cambia nada.
 - **`SELECT FOR UPDATE` en vez de un `UPDATE` condicionado:** en READ COMMITTED, un `UPDATE ... WHERE estado = 'PAGANDO'` no espera si la versión visible de la fila no cumple el filtro, y un pago que llegara antes del commit se perdería. Un test lo reproduce.
-- **Reintentos con espera y reparación:** un fallo pasajero no agota los intentos en milisegundos, y una tarea reenvía los pasos atascados, porque repetirlos es seguro.
+- **Reintentos con espera y reparación:** un fallo pasajero no agota los intentos en milisegundos, y una tarea reenvía los pasos atascados, porque cada consumidor tolera repetirlos.
 - **Publicar antes del commit:** si publicar falla, la transacción se revierte y RabbitMQ reintenta. El límite es que, si el proceso cae entre publicar y confirmar, el evento ya salió y el estado no cambió (no hay *outbox*).
 - **Gateway delgado y permisos en cada servicio:** el gateway valida el JWT y traduce HTTP a mensajes. Cada servicio vuelve a exigir el rol de la acción, así que no depende solo de la puerta.
 - **Cookie `httpOnly` y `SameSite=Strict`:** JavaScript no puede leer la sesión y el navegador no la envía desde otros sitios. La web y la API comparten origen gracias al proxy de nginx.
@@ -205,7 +207,7 @@ sequenceDiagram
 ## Límites conocidos
 
 - **Sin *outbox*.** Si un servicio cae justo después de publicar y antes del commit, el evento ya salió pero el estado no cambió. Al procesar un mensaje entrante se recupera solo. En `pagar` no: la reserva sigue pendiente y el cupo se libera al vencer.
-- **Sin cola de mensajes fallidos.** Al décimo intento, un evento se descarta y solo queda en el log. La reparación recupera los pasos de pago y emisión, pero el correo no se reenvía: el cliente ve sus entradas en "Mis entradas".
+- **Sin cola de mensajes fallidos.** Al décimo intento, un evento se descarta y solo queda en el log. La reparación recupera el pago, la emisión y la liberación de cupos, pero el correo no se reenvía: el cliente ve sus entradas en "Mis entradas".
 - **Sin límite de reservas por cliente.** Alguien podría apartar cupos una y otra vez sin pagar; cada reserva se limita a 6 entradas y vence en 10 minutos.
 - **Límite de intentos de login y registro en memoria.** Vale por instancia del gateway y se reinicia con ella.
 - **El registro revela qué correos existen.** Responde 409 si el correo ya está.
@@ -218,7 +220,6 @@ sequenceDiagram
 - Cola de mensajes fallidos, para no perder los que agotan sus reintentos.
 - Una base de datos por servicio.
 - Límite de reservas por cliente.
-- Reintentos con espera entre intentos.
 - Escáner de QR con cámara en la puerta.
 - Datos de demo al arrancar, para no empezar con la base vacía.
 - Despliegue público.

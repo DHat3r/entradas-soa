@@ -142,8 +142,8 @@ stateDiagram-v2
     PAGANDO --> RECHAZADA: pago.rechazado
 ```
 
-Cada transición bloquea la fila con `SELECT ... FOR UPDATE`, comprueba el estado esperado y recién
-ahí lo cambia. Si el estado ya es otro, otro proceso hizo la transición y el mensaje se ignora. Así se
+Las transiciones que reaccionan a un mensaje bloquean la fila con `SELECT ... FOR UPDATE`, comprueban
+el estado esperado y recién ahí lo cambian. Si el estado ya es otro, otro proceso hizo la transición y el mensaje se ignora. Así se
 resuelven los mensajes repetidos.
 
 No sirve un `UPDATE ... WHERE estado = 'PAGANDO'`: en READ COMMITTED, si la versión visible de la fila
@@ -159,9 +159,10 @@ liberada.
 ### Reparación
 
 Si un mensaje agota sus intentos o el broker pierde datos, una reserva podría quedar detenida. Cada
-30 segundos, `reservas` busca las que llevan más de 2 minutos en `PAGANDO`, o `CONFIRMADA` sin que haya
-llegado `entradas.emitidas`, y reenvía el paso. Repetir es seguro: `pagos` conserva su resultado y
-`entradas` no emite dos veces.
+30 segundos, `reservas` busca las que llevan más de 2 minutos en `PAGANDO`, en `CONFIRMADA` sin que haya
+llegado `entradas.emitidas`, o canceladas sin que haya llegado `cupos.liberados`, y reenvía el paso.
+Repetir es seguro: `pagos` conserva su resultado, `entradas` no emite dos veces, `notificaciones` no
+reenvía el correo y `eventos` no libera dos veces.
 
 ### Eventos publicados
 
@@ -171,7 +172,8 @@ llegado `entradas.emitidas`, y reenvía el paso. Repetir es seguro: `pagos` cons
 | `pago.aprobado` | pagos | reservas | `reserva_id, pago_id` |
 | `pago.rechazado` | pagos | reservas | `reserva_id, pago_id` |
 | `reserva.confirmada` | reservas | entradas | `reserva_id, cliente_id, cliente_correo, evento_id, evento_nombre, sector_nombre, cantidad` |
-| `reserva.cancelada` | reservas | eventos | `reserva_id, sector_id, motivo` (`rechazada`, `vencida`, `error`) |
+| `reserva.cancelada` | reservas | eventos | `reserva_id, sector_id, motivo` (`rechazada`, `vencida`, `error`, `reintento`) |
+| `cupos.liberados` | eventos | reservas | `reserva_id` |
 | `entradas.emitidas` | entradas | notificaciones, reservas | `reserva_id, cliente_correo, evento_nombre, sector_nombre, entradas[{id, codigo}]` |
 
 ## Reglas que no se pueden romper
@@ -224,8 +226,8 @@ origen porque nginx hace de proxy de `/api`.
 - **Sin límite de reservas por cliente.** Alguien podría apartar cupos una y otra vez sin pagar;
   cada reserva se limita a 6 entradas y vence en 10 minutos.
 - **Sin cola de mensajes fallidos.** Al décimo intento, un evento se descarta y solo queda en el log.
-  La reparación recupera los pasos de pago y emisión; el correo de las entradas no se reenvía, pero
-  el cliente las ve en "Mis entradas".
+  La reparación recupera el pago, la emisión y la liberación de cupos. Si se descarta `entradas.emitidas`,
+  el correo no se reenvía, pero el cliente ve sus entradas en "Mis entradas".
 - **Límite de intentos de login y registro en memoria.** Vale por instancia del gateway y se reinicia
   con ella.
 - **El registro revela qué correos existen.** Responde 409 si el correo ya está; el login sí responde
