@@ -12,15 +12,15 @@ def registrar_notificador(bus, sesiones: Sesiones, enviador, remitente: str) -> 
     async def al_emitir_entradas(datos: dict) -> None:
         entradas = DatosDeEntradas.model_validate(datos)
         async with sesiones() as sesion:
-            if await sesion.get(CorreoEnviado, entradas.reserva_id):
-                return
-            # Se registra después de enviar: es preferible un correo duplicado en un caso muy raro
-            # antes que una entrada que nunca llega. Si el envío falla, la excepción sube, no se
-            # guarda la fila y RabbitMQ reintenta.
-            await enviador.enviar(construir_correo(remitente, entradas))
-            await sesion.execute(
+            # Se registra antes de enviar y en la misma transacción. Una copia simultánea espera
+            # este commit y luego no inserta nada, así que no reenvía. Si el envío falla, la
+            # transacción se revierte y el reintento vuelve a intentarlo.
+            nuevo = await sesion.execute(
                 insert(CorreoEnviado)
                 .values(reserva_id=entradas.reserva_id, destinatario=entradas.cliente_correo)
                 .on_conflict_do_nothing()
             )
+            if nuevo.rowcount == 0:
+                return
+            await enviador.enviar(construir_correo(remitente, entradas))
             await sesion.commit()

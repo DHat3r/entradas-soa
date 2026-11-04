@@ -1,3 +1,4 @@
+import asyncio
 import uuid
 
 import pytest
@@ -127,3 +128,11 @@ async def test_un_salto_de_linea_en_el_nombre_no_impide_enviar_el_correo(bus, en
     mensaje = enviador.enviados[0]
     assert mensaje["Subject"] == "Tus entradas para Concierto Bcc: otro@correo.cl"
     assert mensaje["Bcc"] is None
+
+
+async def test_copias_simultaneas_del_evento_envian_un_solo_correo(bus, enviador):
+    datos = evento()
+
+    await asyncio.gather(*(bus.entregar("entradas.emitidas", datos) for _ in range(5)))
+
+    assert len(enviador.enviados) == 1
