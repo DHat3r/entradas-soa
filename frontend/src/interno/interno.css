@@ -1,11 +1,5 @@
 /* Sistema interno: tema oscuro de herramienta de trabajo, con la misma marca que clientes. */
 .in-pagina {
-  --fondo: #16140f;
-  --superficie: #211e17;
-  --texto: #f6f1e7;
-  --texto-suave: #b4ac9b;
-  --borde: #3a352a;
-
   min-height: 100vh;
   background: var(--fondo);
   color: var(--texto);
@@ -71,8 +65,8 @@
 
 .in-nav a[aria-current="page"] {
   color: var(--texto);
-  background: var(--fondo);
-  box-shadow: inset 3px 0 0 var(--bermellon);
+  background: var(--exito-fondo);
+  box-shadow: inset 3px 0 0 var(--acento);
 }
 
 .in-usuario {
@@ -185,13 +179,13 @@
 }
 
 .in-etiqueta-publicado {
-  background: #1f4d37;
-  color: #bfe8d2;
+  background: var(--exito-fondo);
+  color: var(--exito);
 }
 
 .in-etiqueta-borrador {
-  background: #4a3d14;
-  color: #f3dc9b;
+  background: var(--aviso-fondo);
+  color: var(--aviso);
 }
 
 .in-acciones {
@@ -205,6 +199,7 @@
   overflow-x: auto;
   border: 1px solid var(--borde);
   border-radius: var(--radio);
+  background: var(--superficie);
 }
 
 .in-tabla-wrap table {
@@ -235,6 +230,7 @@
 .in-tabla-wrap tfoot td {
   border-top: 2px solid var(--borde);
   border-bottom: 0;
+  background: var(--superficie-alta);
   font-weight: 700;
 }
 
@@ -355,15 +351,15 @@
 }
 
 .in-panel-ok {
-  background: #16452f;
-  border-color: #3fa374;
-  color: #e3f6ec;
+  background: var(--exito-fondo);
+  border-color: var(--acento);
+  color: var(--exito);
 }
 
 .in-panel-error {
-  background: #4a1d15;
-  border-color: #e0664f;
-  color: #fde4dc;
+  background: var(--error-fondo);
+  border-color: var(--error);
+  color: var(--error);
 }
 
 .in-simbolo {
@@ -373,7 +369,12 @@
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  background: rgb(255 255 255 / 12%);
+  background: var(--superficie-alta);
   font-size: 2.5rem;
   font-weight: 800;
+}
+
+.in-panel-ok .in-simbolo {
+  background: var(--acento);
+  color: var(--sobre-acento);
 }

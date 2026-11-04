@@ -135,7 +135,7 @@
 
 .hero-bloque {
   display: inline-block;
-  margin: 0.08em 0 0.08em -0.05em;
+  margin: 0.16em 0 0.08em -0.05em;
   padding: 0.04em 0.22em 0.08em 0.16em;
   border-radius: 6px;
   background: var(--acento);
@@ -302,6 +302,7 @@
   display: grid;
   grid-template-columns: var(--corte) 1fr;
   height: 100%;
+  border-radius: 14px;
   /* Los semicírculos son el troquel del papel: se recortan del fondo de la tarjeta. */
   background:
     radial-gradient(circle at var(--corte) 0, transparent var(--muesca), var(--superficie-alta) 0)
