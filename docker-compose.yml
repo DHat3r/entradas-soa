@@ -60,6 +60,14 @@ services:
       SEED_VALIDADOR_CORREO: ${SEED_VALIDADOR_CORREO:?falta SEED_VALIDADOR_CORREO}
       SEED_PASSWORD: ${SEED_PASSWORD:?falta SEED_PASSWORD}
 
+  eventos:
+    <<: *servicio
+    build:
+      context: .
+      dockerfile: services/eventos/Dockerfile
+    environment:
+      <<: *conexiones
+
   gateway:
     build:
       context: .

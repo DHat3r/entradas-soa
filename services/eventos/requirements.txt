@@ -1,0 +1,1 @@
+# Sin dependencias propias: lo que necesita viene de libs/mensajeria y libs/basedatos.
