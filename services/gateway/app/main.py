@@ -9,12 +9,12 @@ from dataclasses import dataclass
 import jwt
 from fastapi import Body, Depends, FastAPI, Request, Response
 from fastapi.responses import JSONResponse
-from mensajeria import Bus, ErrorDeNegocio, SinRespuesta
+from mensajeria import Bus, ErrorDeNegocio, SinRespuesta, avisar_si_secreto_de_ejemplo
 
 COOKIE_SESION = "sesion"
 DURACION_COOKIE_SEGUNDOS = 8 * 60 * 60
-MAX_INTENTOS_LOGIN = 5
-VENTANA_LOGIN_SEGUNDOS = 60
+MAX_INTENTOS = 5
+VENTANA_SEGUNDOS = 60
 
 HTTP_POR_CODIGO = {
     "validacion": 422,
@@ -32,7 +32,7 @@ class Ajustes:
     cookie_secure: bool = True
 
 
-class LimitadorDeLogin:
+class LimitadorDeIntentos:
     """Ventana deslizante por IP. Vive en memoria: vale por instancia del gateway."""
 
     def __init__(self, ahora=time.monotonic) -> None:
@@ -40,13 +40,24 @@ class LimitadorDeLogin:
         self._intentos: dict[str, list[float]] = defaultdict(list)
 
     def permitir(self, ip: str) -> bool:
-        limite = self._ahora() - VENTANA_LOGIN_SEGUNDOS
+        limite = self._ahora() - VENTANA_SEGUNDOS
         recientes = [t for t in self._intentos[ip] if t > limite]
-        permitido = len(recientes) < MAX_INTENTOS_LOGIN
+        permitido = len(recientes) < MAX_INTENTOS
         if permitido:
             recientes.append(self._ahora())
         self._intentos[ip] = recientes
         return permitido
+
+
+def ip_de(request: Request) -> str:
+    return request.client.host if request.client else "desconocida"
+
+
+def demasiados_intentos() -> JSONResponse:
+    return JSONResponse(
+        {"codigo": "demasiados_intentos", "mensaje": "Espera un minuto e intenta de nuevo"},
+        status_code=429,
+    )
 
 
 def leer_identidad(request: Request, jwt_secret: str) -> dict | None:
@@ -84,7 +95,8 @@ def crear_app(bus, ajustes: Ajustes, conectar_bus: bool = True) -> FastAPI:
         docs_url="/api/docs",
         openapi_url="/api/openapi.json",
     )
-    limitador = LimitadorDeLogin()
+    limitador_login = LimitadorDeIntentos()
+    limitador_registro = LimitadorDeIntentos()
 
     @app.exception_handler(ErrorDeNegocio)
     async def error_de_negocio(request: Request, error: ErrorDeNegocio) -> JSONResponse:
@@ -107,17 +119,15 @@ def crear_app(bus, ajustes: Ajustes, conectar_bus: bool = True) -> FastAPI:
 
     # ── Sesión ───────────────────────────────────────────────────────────────
     @app.post("/api/auth/registro", status_code=201)
-    async def registro(datos: dict = Body(...)):
+    async def registro(request: Request, datos: dict = Body(...)):
+        if not limitador_registro.permitir(ip_de(request)):
+            return demasiados_intentos()
         return await bus.pedir("auth", "registrar", datos)
 
     @app.post("/api/auth/login")
     async def login(request: Request, response: Response, datos: dict = Body(...)):
-        ip = request.client.host if request.client else "desconocida"
-        if not limitador.permitir(ip):
-            return JSONResponse(
-                {"codigo": "demasiados_intentos", "mensaje": "Espera un minuto e intenta de nuevo"},
-                status_code=429,
-            )
+        if not limitador_login.permitir(ip_de(request)):
+            return demasiados_intentos()
         resultado = await bus.pedir("auth", "login", datos)
         response.set_cookie(
             COOKIE_SESION,
@@ -128,7 +138,8 @@ def crear_app(bus, ajustes: Ajustes, conectar_bus: bool = True) -> FastAPI:
             secure=ajustes.cookie_secure,
             path="/",
         )
-        return resultado
+        # El token solo va en la cookie httpOnly: si viajara en el cuerpo, JavaScript podría leerlo.
+        return {"usuario": resultado["usuario"]}
 
     @app.post("/api/auth/logout", status_code=204)
     async def logout(response: Response) -> None:
@@ -196,6 +207,7 @@ def crear_app_de_produccion() -> FastAPI:
     jwt_secret = os.environ["JWT_SECRET"]
     if len(jwt_secret) < 32:
         raise SystemExit("JWT_SECRET debe tener al menos 32 caracteres")
+    avisar_si_secreto_de_ejemplo("JWT_SECRET", jwt_secret)
     ajustes = Ajustes(
         jwt_secret=jwt_secret,
         cookie_secure=os.getenv("COOKIE_SECURE", "true").lower() == "true",

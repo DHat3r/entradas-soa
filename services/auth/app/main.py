@@ -2,7 +2,7 @@ import asyncio
 import os
 
 from basedatos import crear_motor, crear_sesiones
-from mensajeria import Bus, ejecutar_servicio
+from mensajeria import Bus, avisar_si_secreto_de_ejemplo, ejecutar_servicio
 
 from app.acciones import registrar_acciones, sembrar_internos
 
@@ -11,6 +11,7 @@ async def main() -> None:
     jwt_secret = os.environ["JWT_SECRET"]
     if len(jwt_secret) < 32:
         raise SystemExit("JWT_SECRET debe tener al menos 32 caracteres")
+    avisar_si_secreto_de_ejemplo("JWT_SECRET", jwt_secret)
 
     sesiones = crear_sesiones(crear_motor(os.environ["DATABASE_URL"], "auth"))
     password = os.environ["SEED_PASSWORD"]

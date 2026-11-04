@@ -11,7 +11,8 @@ from app.modelos import Evento, Sector
 
 class SectorNuevo(BaseModel):
     nombre: str = Field(min_length=1, max_length=80)
-    precio_clp: int = Field(ge=0)
+    # Tope para que el total de una compra de 6 entradas quepa en un entero de 32 bits.
+    precio_clp: int = Field(ge=0, le=10_000_000)
     capacidad: int = Field(ge=1, le=100000)
 
 
@@ -48,6 +49,15 @@ def a_dict(evento: Evento) -> dict:
             for sector in evento.sectores
         ],
     }
+
+
+def a_dict_publico(evento: Evento) -> dict:
+    """Lo que ve cualquiera: sin quién organiza ni cuánto se ha vendido."""
+    datos = a_dict(evento)
+    del datos["organizador_id"]
+    for sector in datos["sectores"]:
+        del sector["vendidos"]
+    return datos
 
 
 def _es_organizador_de(evento: Evento, identidad: dict | None) -> bool:
@@ -112,7 +122,7 @@ def registrar_acciones(bus, sesiones: Sesiones) -> None:
                     .order_by(Evento.fecha)
                 )
             ).all()
-        return [a_dict(evento) for evento in eventos]
+        return [a_dict_publico(evento) for evento in eventos]
 
     @bus.accion("detalle")
     async def detalle(datos: dict, identidad) -> dict:
@@ -122,9 +132,11 @@ def registrar_acciones(bus, sesiones: Sesiones) -> None:
         if evento is None:
             raise ErrorDeNegocio("no_encontrado", "Evento no encontrado")
         # Un borrador solo lo ve su organizador: para los demás no existe.
-        if evento.estado != "PUBLICADO" and not _es_organizador_de(evento, identidad):
+        if _es_organizador_de(evento, identidad):
+            return a_dict(evento)
+        if evento.estado != "PUBLICADO":
             raise ErrorDeNegocio("no_encontrado", "Evento no encontrado")
-        return a_dict(evento)
+        return a_dict_publico(evento)
 
     @bus.accion("listar_mios")
     async def listar_mios(datos: dict, identidad) -> list[dict]:

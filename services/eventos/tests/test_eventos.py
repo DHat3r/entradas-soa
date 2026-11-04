@@ -195,3 +195,25 @@ async def test_vendidos_se_calcula_como_capacidad_menos_disponibles(bus, sesione
     detalle = await bus.llamar("detalle", {"evento_id": creado["id"]}, ORGANIZADOR)
 
     assert detalle["sectores"][0]["vendidos"] == 40
+
+
+async def test_el_publico_no_ve_organizador_ni_vendidos(bus):
+    creado = await bus.llamar("crear", {**EVENTO, "fecha": futura()}, ORGANIZADOR)
+    await bus.llamar("publicar", {"evento_id": creado["id"]}, ORGANIZADOR)
+
+    for evento in [
+        (await bus.llamar("listar_publicados"))[0],
+        await bus.llamar("detalle", {"evento_id": creado["id"]}, CLIENTE),
+    ]:
+        assert "organizador_id" not in evento
+        assert "vendidos" not in evento["sectores"][0]
+        assert evento["sectores"][0]["disponibles"] == 100
+
+
+async def test_rechaza_un_precio_sobre_el_tope(bus):
+    sector = {**SECTOR, "precio_clp": 10_000_001}
+
+    with pytest.raises(ErrorDeNegocio) as error:
+        await bus.llamar("crear", {**EVENTO, "sectores": [sector]}, ORGANIZADOR)
+
+    assert error.value.codigo == "validacion"

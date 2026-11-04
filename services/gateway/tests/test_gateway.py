@@ -5,7 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 from mensajeria import BusDePrueba, ErrorDeNegocio, SinRespuesta
 
-from app.main import COOKIE_SESION, Ajustes, LimitadorDeLogin, crear_app
+from app.main import COOKIE_SESION, Ajustes, LimitadorDeIntentos, crear_app
 
 SECRETO = "secreto-de-prueba-con-mas-de-32-caracteres"
 
@@ -50,6 +50,7 @@ def test_login_guarda_la_sesion_en_una_cookie_httponly_y_estricta(cliente, bus):
     assert f"{COOKIE_SESION}=" in cookie
     assert "httponly" in cookie
     assert "samesite=strict" in cookie
+    assert "token" not in respuesta.json()
 
 
 def test_login_se_bloquea_tras_demasiados_intentos(cliente, bus):
@@ -63,7 +64,7 @@ def test_login_se_bloquea_tras_demasiados_intentos(cliente, bus):
 
 def test_limitador_vuelve_a_permitir_cuando_pasa_la_ventana():
     reloj = [0.0]
-    limitador = LimitadorDeLogin(ahora=lambda: reloj[0])
+    limitador = LimitadorDeIntentos(ahora=lambda: reloj[0])
 
     for _ in range(5):
         assert limitador.permitir("ip")
@@ -165,3 +166,11 @@ def test_pagar_usa_el_id_de_la_ruta_aunque_el_cuerpo_traiga_otro(cliente, bus):
     )
 
     assert bus.pedidos[-1][2]["reserva_id"] == "r1"
+
+
+def test_registro_se_bloquea_tras_demasiados_intentos(cliente, bus):
+    bus.respuestas[("auth", "registrar")] = {"id": "u1"}
+
+    estados = [cliente.post("/api/auth/registro", json={}).status_code for _ in range(6)]
+
+    assert estados == [201] * 5 + [429]

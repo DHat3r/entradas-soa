@@ -6,7 +6,7 @@ describe("rutaSegura", () => {
     expect(rutaSegura("/mis-entradas", "/")).toBe("/mis-entradas");
   });
 
-  it.each(["https://malo.cl", "//malo.cl", "javascript:alert(1)", null])(
+  it.each(["https://malo.cl", "//malo.cl", "/\\malo.cl", "javascript:alert(1)", null])(
     "rechaza %s y usa la ruta por defecto",
     (volver) => {
       expect(rutaSegura(volver, "/")).toBe("/");

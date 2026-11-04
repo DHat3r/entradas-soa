@@ -1,3 +1,5 @@
+import asyncio
+
 from basedatos import Sesiones
 from mensajeria import ErrorDeNegocio
 from pydantic import BaseModel, EmailStr, Field
@@ -37,7 +39,8 @@ def registrar_acciones(bus, sesiones: Sesiones, jwt_secret: str) -> None:
         usuario = Usuario(
             nombre=registro.nombre.strip(),
             correo=registro.correo.lower(),
-            password_hash=hashear(registro.password),
+            # En un hilo aparte: argon2 tarda a propósito y no debe frenar a los demás pedidos.
+            password_hash=await asyncio.to_thread(hashear, registro.password),
             rol="cliente",
         )
         async with sesiones() as sesion:
@@ -56,7 +59,7 @@ def registrar_acciones(bus, sesiones: Sesiones, jwt_secret: str) -> None:
                 select(Usuario).where(Usuario.correo == credenciales.correo.lower())
             )
         hash_guardado = usuario.password_hash if usuario else None
-        if not verificar(credenciales.password, hash_guardado):
+        if not await asyncio.to_thread(verificar, credenciales.password, hash_guardado):
             raise ErrorDeNegocio("no_autorizado", "Correo o contraseña incorrectos")
         return {"token": emitir_token(usuario, jwt_secret), "usuario": a_dict(usuario)}
 
@@ -65,6 +68,7 @@ async def sembrar_internos(sesiones: Sesiones, cuentas: list[tuple[str, str, str
     """Crea las cuentas internas si no existen. Es la única forma de obtener esos roles."""
     async with sesiones() as sesion:
         for nombre, correo, password, rol in cuentas:
+            correo = correo.lower()
             existe = await sesion.scalar(select(Usuario.id).where(Usuario.correo == correo))
             if not existe:
                 sesion.add(
