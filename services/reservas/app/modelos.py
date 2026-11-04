@@ -41,4 +41,7 @@ class Reserva(Base):
     resultado_simulado: Mapped[str | None] = mapped_column(String(10))
     transicion_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     entradas_emitidas: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
+    liberacion_pendiente: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default=false()
+    )
     creada_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

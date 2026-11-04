@@ -283,7 +283,7 @@ async def test_vencimiento_salta_la_fila_bloqueada_y_la_toma_en_la_vuelta_siguie
     assert await vencer_reservas(bus, sesiones) == 1
 
 
-async def test_pagar_con_plazo_vigente_y_vencimiento_a_la_vez_deja_pagando(bus, sesiones):
+async def test_vencimiento_no_toca_una_reserva_con_plazo_vigente_que_se_esta_pagando(bus, sesiones):
     reserva = await nueva_reserva(bus)
 
     await asyncio.gather(
@@ -384,3 +384,33 @@ async def test_pago_que_llega_antes_del_commit_de_pagar_no_se_pierde(bus, sesion
 
     assert await estado(sesiones, reserva["id"]) == "CONFIRMADA"
     assert tipos(bus).count("reserva.confirmada") == 1
+
+
+async def test_reparacion_reenvia_la_cancelacion_hasta_que_eventos_confirme(bus, sesiones):
+    reserva = await pagando(bus)
+    await bus.entregar("pago.rechazado", {"reserva_id": reserva["id"]})
+    await envejecer(sesiones, reserva["id"])
+
+    assert await reparar_reservas(bus, sesiones) == 1
+    tipo, datos = bus.publicados[-1]
+    assert tipo == "reserva.cancelada"
+    assert datos["motivo"] == "reintento"
+    assert await estado(sesiones, reserva["id"]) == "RECHAZADA"
+
+    await envejecer(sesiones, reserva["id"])
+    await bus.entregar("cupos.liberados", {"reserva_id": reserva["id"]})
+    assert await reparar_reservas(bus, sesiones) == 0
+
+
+async def test_cancelar_por_falta_de_cupos_no_deja_nada_por_liberar(bus, sesiones):
+    bus.respuestas[("eventos", "apartar_cupos")] = ErrorDeNegocio("conflicto", "Sin cupos")
+    with pytest.raises(ErrorDeNegocio):
+        await nueva_reserva(bus)
+
+    async with sesiones() as sesion:
+        reserva = await sesion.scalar(select(Reserva))
+        assert reserva.liberacion_pendiente is False
+        reserva.transicion_en = datetime.now(UTC) - timedelta(minutes=5)
+        await sesion.commit()
+
+    assert await reparar_reservas(bus, sesiones) == 0

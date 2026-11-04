@@ -163,3 +163,15 @@ async def test_apartar_atrasado_despues_de_cancelar_no_toma_cupos(bus, sesiones)
 
     assert error.value.codigo == "conflicto"
     assert await disponibles(sesiones, sector_id) == 10
+
+
+async def test_cancelar_confirma_la_liberacion_incluso_si_se_repite(bus):
+    sector_id = await crear_sector(bus)
+    apartado = pedido(sector_id)
+    await bus.llamar("apartar_cupos", apartado)
+    evento = {"reserva_id": apartado["reserva_id"], "sector_id": sector_id}
+
+    await bus.entregar("reserva.cancelada", evento)
+    await bus.entregar("reserva.cancelada", evento)
+
+    assert bus.publicados == [("cupos.liberados", {"reserva_id": apartado["reserva_id"]})] * 2

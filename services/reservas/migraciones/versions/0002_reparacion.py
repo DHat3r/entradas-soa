@@ -20,9 +20,14 @@ def upgrade() -> None:
         "reservas",
         sa.Column("entradas_emitidas", sa.Boolean(), server_default=sa.false(), nullable=False),
     )
+    op.add_column(
+        "reservas",
+        sa.Column("liberacion_pendiente", sa.Boolean(), server_default=sa.false(), nullable=False),
+    )
 
 
 def downgrade() -> None:
+    op.drop_column("reservas", "liberacion_pendiente")
     op.drop_column("reservas", "entradas_emitidas")
     op.drop_column("reservas", "transicion_en")
     op.drop_column("reservas", "resultado_simulado")

@@ -49,7 +49,7 @@ class PedidoDePago(ReservaPorId):
     resultado_simulado: Literal["aprobar", "rechazar"]
 
 
-class ResultadoDePago(BaseModel):
+class AvisoDeReserva(BaseModel):
     reserva_id: uuid.UUID
 
 
@@ -67,6 +67,9 @@ def a_dict(reserva: Reserva) -> dict:
 
 
 async def _cancelacion(bus, reserva: Reserva, motivo: str) -> None:
+    # Queda pendiente hasta que eventos confirme: si el mensaje se pierde, la reparación lo reenvía.
+    reserva.liberacion_pendiente = True
+    reserva.transicion_en = datetime.now(UTC)
     await bus.publicar(
         "reserva.cancelada",
         {"reserva_id": str(reserva.id), "sector_id": str(reserva.sector_id), "motivo": motivo},
@@ -138,8 +141,9 @@ async def vencer_reservas(bus, sesiones: Sesiones) -> int:
 async def reparar_reservas(bus, sesiones: Sesiones) -> int:
     """Reenvía los pasos atascados. Devuelve cuántos reenvió.
 
-    Si un mensaje agota sus reintentos, RabbitMQ lo descarta y la reserva quedaría detenida.
-    Repetir es seguro: pagos conserva su resultado y entradas no emite dos veces.
+    Si un mensaje agota sus intentos, se descarta y la reserva quedaría detenida. Repetir es
+    seguro: pagos conserva su resultado, entradas no emite dos veces, notificaciones no reenvía
+    el correo y eventos no libera dos veces.
     """
     ahora = datetime.now(UTC)
     async with sesiones() as sesion:
@@ -150,6 +154,7 @@ async def reparar_reservas(bus, sesiones: Sesiones) -> int:
                     or_(
                         Reserva.estado == "PAGANDO",
                         and_(Reserva.estado == "CONFIRMADA", Reserva.entradas_emitidas.is_(False)),
+                        Reserva.liberacion_pendiente.is_(True),
                     ),
                     Reserva.transicion_en <= ahora - MARGEN_REPARACION,
                 )
@@ -159,7 +164,9 @@ async def reparar_reservas(bus, sesiones: Sesiones) -> int:
         ).all()
         for reserva in atascadas:
             log.warning("Reenviando paso atascado de la reserva %s", reserva.id)
-            if reserva.estado == "PAGANDO":
+            if reserva.liberacion_pendiente:
+                await _cancelacion(bus, reserva, "reintento")
+            elif reserva.estado == "PAGANDO":
                 await _publicar_solicitud_de_pago(bus, reserva)
             else:
                 await _publicar_confirmacion(bus, reserva)
@@ -221,8 +228,9 @@ def registrar_saga(bus, sesiones: Sesiones) -> None:
             async with sesiones() as sesion:
                 # Un error de negocio revirtió en eventos y no hay nada que liberar. Con un error
                 # interno no se sabe si alcanzó a confirmar, así que se compensa.
-                if await _transicion(sesion, reserva.id, "CREADA", "CANCELADA") and incierto:
-                    await _cancelacion(bus, reserva, "error")
+                cancelada = await _transicion(sesion, reserva.id, "CREADA", "CANCELADA")
+                if cancelada and incierto:
+                    await _cancelacion(bus, cancelada, "error")
                 await sesion.commit()
             if incierto:
                 raise ErrorDeNegocio("no_disponible", NO_SE_PUDO_APARTAR) from error
@@ -230,8 +238,9 @@ def registrar_saga(bus, sesiones: Sesiones) -> None:
         except SinRespuesta as error:
             # No se sabe si alcanzó a apartar, así que se compensa de todos modos.
             async with sesiones() as sesion:
-                if await _transicion(sesion, reserva.id, "CREADA", "CANCELADA"):
-                    await _cancelacion(bus, reserva, "error")
+                cancelada = await _transicion(sesion, reserva.id, "CREADA", "CANCELADA")
+                if cancelada:
+                    await _cancelacion(bus, cancelada, "error")
                 await sesion.commit()
             raise ErrorDeNegocio("no_disponible", NO_SE_PUDO_APARTAR) from error
 
@@ -310,7 +319,7 @@ def registrar_saga(bus, sesiones: Sesiones) -> None:
 
     @bus.al_recibir("pago.aprobado")
     async def al_aprobar_pago(datos: dict) -> None:
-        resultado = ResultadoDePago.model_validate(datos)
+        resultado = AvisoDeReserva.model_validate(datos)
         async with sesiones() as sesion:
             reserva = await _transicion(
                 sesion,
@@ -323,9 +332,20 @@ def registrar_saga(bus, sesiones: Sesiones) -> None:
                 await _publicar_confirmacion(bus, reserva)
             await sesion.commit()
 
+    @bus.al_recibir("cupos.liberados")
+    async def al_liberar_cupos(datos: dict) -> None:
+        resultado = AvisoDeReserva.model_validate(datos)
+        async with sesiones() as sesion:
+            await sesion.execute(
+                update(Reserva)
+                .where(Reserva.id == resultado.reserva_id)
+                .values(liberacion_pendiente=False)
+            )
+            await sesion.commit()
+
     @bus.al_recibir("entradas.emitidas")
     async def al_emitir_entradas(datos: dict) -> None:
-        resultado = ResultadoDePago.model_validate(datos)
+        resultado = AvisoDeReserva.model_validate(datos)
         async with sesiones() as sesion:
             await sesion.execute(
                 update(Reserva)
@@ -336,7 +356,7 @@ def registrar_saga(bus, sesiones: Sesiones) -> None:
 
     @bus.al_recibir("pago.rechazado")
     async def al_rechazar_pago(datos: dict) -> None:
-        resultado = ResultadoDePago.model_validate(datos)
+        resultado = AvisoDeReserva.model_validate(datos)
         async with sesiones() as sesion:
             reserva = await _transicion(sesion, resultado.reserva_id, "PAGANDO", "RECHAZADA")
             if reserva:

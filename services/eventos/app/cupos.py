@@ -110,4 +110,6 @@ def registrar_cupos(bus, sesiones: Sesiones) -> None:
                         .where(Sector.id == liberado.sector_id)
                         .values(disponibles=Sector.disponibles + liberado.cantidad)
                     )
+            # También en una repetición: la confirmación anterior pudo haberse perdido.
+            await bus.publicar("cupos.liberados", {"reserva_id": str(cancelada.reserva_id)})
             await sesion.commit()
