@@ -94,6 +94,12 @@
   padding: 0 1rem 5rem;
 }
 
+/* Avisos que son todo el contenido de la página: sin esto quedan pegados a la cabecera. */
+.cl-contenido > .aviso,
+.cl-contenido > .vacio {
+  margin-top: 2.5rem;
+}
+
 /* ── Hero ────────────────────────────────────────────────────── */
 .hero {
   display: grid;
@@ -571,7 +577,7 @@ a.boleto:hover {
   gap: 1.5rem;
 }
 
-.cl-pie h3 {
+.cl-pie h2 {
   margin-bottom: 0.75rem;
   font-size: 0.72rem;
   font-weight: 700;
@@ -634,7 +640,25 @@ a.boleto:hover {
     right: 8px;
   }
 
-  .cl-marca span {
-    font-size: 1rem;
+}
+
+/* En pantallas muy angostas no caben marca, "Ingresar" y "Crear cuenta": queda solo el logo. */
+@media (max-width: 380px) {
+  .cl-cabecera {
+    gap: 0.5rem;
+    padding-left: 0.75rem;
+  }
+
+  .cl-cabecera .cl-marca span {
+    display: none;
+  }
+
+  .cl-nav a:not(.boton),
+  .cl-nav button:not(.boton) {
+    padding-inline: 0.4rem;
+  }
+
+  .cl-nav .boton {
+    padding-inline: 0.75rem;
   }
 }

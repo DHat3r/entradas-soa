@@ -12,8 +12,11 @@ Hay dos sistemas en la misma web: clientes (`/`) e interno (`/interno`).
 
 ### Sistema de clientes
 
-![Portada con los próximos eventos en tarjetas con forma de entrada](docs/capturas/portada.png)
-*Portada: los próximos eventos a la venta.*
+![Portada con el título, los datos clave de la compra y una entrada de ejemplo](docs/capturas/portada.png)
+*Portada: qué ofrece y cómo se ve una entrada.*
+
+![Próximos eventos en tarjetas oscuras con forma de entrada troquelada](docs/capturas/eventos.png)
+*Próximos eventos: cada tarjeta tiene las muescas de una entrada de papel.*
 
 ![Página de un evento con sectores, precios, cupos disponibles y el total](docs/capturas/evento.png)
 *Evento: el cliente elige sector y cantidad, y ve el total antes de reservar.*
@@ -152,8 +155,8 @@ Cantidad de tests por carpeta, contada con `python -m pytest --collect-only -q` 
 | `services/notificaciones` | 7 |
 | **Subtotal Python** | **136** |
 | `e2e` (necesita el stack) | 6 |
-| `frontend` (Vitest) | 17 |
-| **Total** | **159** |
+| `frontend` (Vitest) | 21 |
+| **Total** | **163** |
 
 `libs/basedatos` no tiene tests propios.
 

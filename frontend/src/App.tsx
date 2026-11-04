@@ -1,4 +1,5 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { useEffect } from "react";
+import { BrowserRouter, Route, Routes, useLocation, useNavigationType } from "react-router-dom";
 import { IngresarPage, RegistroPage } from "./clientes/AccesoPages";
 import { CompraPage } from "./clientes/CompraPage";
 import { EventoPage } from "./clientes/EventoPage";
@@ -7,6 +8,18 @@ import { LayoutClientes } from "./clientes/LayoutClientes";
 import { MisEntradasPage } from "./clientes/MisEntradasPage";
 import { RutasInternas } from "./interno/RutasInternas";
 import { ProveedorDeSesion, RequiereRol } from "./lib/sesion";
+
+/** El navegador no sube solo al cambiar de ruta en una app React. Al volver atrás, respeta la posición. */
+function SubirAlNavegar() {
+  const { pathname } = useLocation();
+  const tipo = useNavigationType();
+
+  useEffect(() => {
+    if (tipo !== "POP") window.scrollTo({ top: 0, behavior: "instant" });
+  }, [pathname, tipo]);
+
+  return null;
+}
 
 function SoloCliente({ children }: { children: React.ReactNode }) {
   return (
@@ -19,6 +32,7 @@ function SoloCliente({ children }: { children: React.ReactNode }) {
 export function App() {
   return (
     <BrowserRouter>
+      <SubirAlNavegar />
       <ProveedorDeSesion>
         <Routes>
           <Route path="/interno/*" element={<RutasInternas />} />

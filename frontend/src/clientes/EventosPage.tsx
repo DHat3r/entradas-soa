@@ -30,10 +30,9 @@ const VENTAJAS = [
 ];
 
 const PASOS = [
-  "Elige tu sector y hasta 6 entradas",
+  "Elige tu sector y hasta 6 entradas, e ingresa con tu cuenta",
   "Paga dentro de los 10 minutos que dura la reserva",
   "Recibe un QR por entrada en tu correo",
-  "Si el pago falla, los cupos se liberan solos",
 ];
 
 /** Dibujo de un QR para la ilustración. No es un código real ni se puede escanear. */
@@ -220,10 +219,10 @@ export function EventosPage() {
         <div className="bloque">
           <div>
             <h2>
-              Compra en <span className="destacado">cuatro pasos</span>
+              Compra en <span className="destacado">tres pasos</span>
             </h2>
             <p className="bloque-texto">
-              Sin colas ni filas virtuales: si quedan cupos, son tuyos mientras pagas.
+              Si quedan cupos, son tuyos mientras pagas. Si el pago falla o se acaba el plazo, se liberan solos.
             </p>
             <ul className="lista-chequeo">
               {PASOS.map((paso) => (

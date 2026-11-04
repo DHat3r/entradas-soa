@@ -241,13 +241,6 @@
   font-weight: 400;
 }
 
-/* ── Formularios sobre tema oscuro ───────────────────────────── */
-.in-tarjeta .campo input,
-.in-tarjeta .campo select,
-.in-tarjeta .campo textarea {
-  background: var(--fondo);
-}
-
 .in-sectores {
   display: grid;
   gap: 1rem;
