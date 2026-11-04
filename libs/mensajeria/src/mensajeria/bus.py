@@ -17,7 +17,10 @@ from mensajeria.errores import ErrorDeNegocio, SinRespuesta
 
 EXCHANGE_EVENTOS = "entradas.eventos"
 TIEMPO_RESPUESTA_SEGUNDOS = 5.0
-MAX_ENTREGAS_EVENTO = 5
+# Intentos por evento. Con la espera creciente suman unos 3 minutos antes de descartarlo.
+MAX_INTENTOS_EVENTO = 10
+ESPERA_MAXIMA_SEGUNDOS = 30.0
+ENCABEZADO_INTENTOS = "x-intentos"
 PREFETCH = 20
 
 Identidad = dict[str, Any] | None
@@ -30,9 +33,10 @@ log = logging.getLogger("mensajeria")
 class Bus:
     """Conexión de un servicio al bus. Registra manejadores y luego llama a `conectar`."""
 
-    def __init__(self, url: str, servicio: str) -> None:
+    def __init__(self, url: str, servicio: str, espera_base: float = 1.0) -> None:
         self._url = url
         self.servicio = servicio
+        self._espera_base = espera_base
         self._acciones: dict[str, ManejadorAccion] = {}
         self._eventos: dict[str, ManejadorEvento] = {}
         self._pendientes: dict[str, asyncio.Future] = {}
@@ -78,7 +82,7 @@ class Bus:
             cola = await self._canal.declare_queue(
                 f"{self.servicio}.eventos",
                 durable=True,
-                arguments={"x-queue-type": "quorum", "x-delivery-limit": MAX_ENTREGAS_EVENTO},
+                arguments={"x-queue-type": "quorum"},
             )
             for tipo in self._eventos:
                 await cola.bind(self._exchange, routing_key=tipo)
@@ -112,9 +116,10 @@ class Bus:
                     expiration=tiempo,
                 ),
                 routing_key=f"rpc.{servicio}",
+                timeout=tiempo,
             )
             respuesta = await asyncio.wait_for(futuro, tiempo)
-        except (TimeoutError, aio_pika.exceptions.DeliveryError) as error:
+        except (TimeoutError, ConnectionError, aio_pika.exceptions.AMQPError) as error:
             raise SinRespuesta(f"{servicio}.{accion} no respondió") from error
         finally:
             self._pendientes.pop(correlacion, None)
@@ -182,16 +187,49 @@ class Bus:
             return _respuesta_de_error("interno", "Error interno")
 
     async def _atender_evento(self, mensaje: AbstractIncomingMessage) -> None:
-        # Si el manejador falla, vuelve a la cola; tras MAX_ENTREGAS_EVENTO RabbitMQ lo descarta.
-        async with mensaje.process(requeue=True):
+        try:
             evento = json.loads(mensaje.body)
             manejador = self._eventos.get(evento["tipo"])
             if manejador:
                 await manejador(evento["datos"])
+        except Exception:
+            intento = int((mensaje.headers or {}).get(ENCABEZADO_INTENTOS, 0)) + 1
+            if intento >= MAX_INTENTOS_EVENTO:
+                log.exception(
+                    "Se descarta un evento en %s tras %s intentos", self.servicio, intento
+                )
+                await mensaje.ack()
+                return
+            log.exception("Falló un evento en %s (intento %s)", self.servicio, intento)
+            # Con espera: sin ella, un fallo de unos segundos en una dependencia agotaría los
+            # intentos en milisegundos.
+            await asyncio.sleep(min(self._espera_base * 2 ** (intento - 1), ESPERA_MAXIMA_SEGUNDOS))
+            # Se republica con la cuenta en un encabezado propio. x-delivery-limit no sirve aquí:
+            # en RabbitMQ 4 un nack con requeue no cuenta como entrega fallida (lo prueba un test).
+            await self._canal.default_exchange.publish(
+                aio_pika.Message(
+                    mensaje.body,
+                    content_type="application/json",
+                    message_id=mensaje.message_id,
+                    delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
+                    headers={ENCABEZADO_INTENTOS: intento},
+                ),
+                routing_key=f"{self.servicio}.eventos",
+            )
+            await mensaje.ack()
+        else:
+            await mensaje.ack()
 
 
 def _respuesta_de_error(codigo: str, mensaje: str) -> dict:
     return {"ok": False, "error": {"codigo": codigo, "mensaje": mensaje}}
+
+
+def avisar_si_secreto_de_ejemplo(nombre: str, valor: str) -> None:
+    if "cambia-esto" in valor:
+        logging.getLogger(__name__).warning(
+            "%s tiene el valor de ejemplo de .env.example: cámbialo fuera de desarrollo", nombre
+        )
 
 
 async def ejecutar_servicio(bus: Bus, tareas: list[Callable[[], Awaitable[None]]] = ()) -> None:

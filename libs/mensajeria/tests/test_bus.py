@@ -2,11 +2,13 @@
 
 import asyncio
 import os
+import time
 import uuid
 
 import pytest
 from aio_pika.exceptions import DeliveryError
 from mensajeria import Bus, ErrorDeNegocio, SinRespuesta
+from mensajeria.bus import MAX_INTENTOS_EVENTO
 from pydantic import BaseModel
 
 URL = os.getenv("RABBITMQ_URL", "amqp://entradas:cambia-esto-en-local@localhost:5672/")
@@ -183,3 +185,55 @@ async def test_publicar_evento_sin_consumidores_falla_en_vez_de_perderse(buses):
 
     with pytest.raises(DeliveryError):
         await publicador.publicar(f"nadie.{uuid.uuid4().hex[:8]}", {})
+
+
+async def test_evento_que_siempre_falla_se_descarta_tras_el_maximo_de_intentos(buses):
+    tipo = f"prueba.{uuid.uuid4().hex[:8]}"
+    entregas = []
+    consumidor = Bus(URL, nombre_unico("consumidor"), espera_base=0)
+    buses_creados = buses(nombre_unico("publicador"))
+
+    @consumidor.al_recibir(tipo)
+    async def manejar(datos):
+        entregas.append(1)
+        raise RuntimeError("falla permanente")
+
+    await consumidor.conectar()
+    await buses_creados.conectar()
+    await buses_creados.publicar(tipo, {})
+
+    for _ in range(100):
+        await asyncio.sleep(0.1)
+        if len(entregas) >= MAX_INTENTOS_EVENTO:
+            break
+    # Margen para detectar entregas de más.
+    await asyncio.sleep(1)
+    cantidad = len(entregas)
+    await consumidor._canal.queue_delete(f"{consumidor.servicio}.eventos")
+    await consumidor.cerrar()
+
+    assert cantidad == MAX_INTENTOS_EVENTO
+
+
+async def test_reintento_de_evento_espera_antes_de_volver_a_la_cola(buses):
+    tipo = f"prueba.{uuid.uuid4().hex[:8]}"
+    momentos = []
+    logrado = asyncio.get_running_loop().create_future()
+    consumidor = Bus(URL, nombre_unico("consumidor"), espera_base=0.3)
+    publicador = buses(nombre_unico("publicador"))
+
+    @consumidor.al_recibir(tipo)
+    async def manejar(datos):
+        momentos.append(time.monotonic())
+        if len(momentos) == 1:
+            raise RuntimeError("falla temporal")
+        logrado.set_result(True)
+
+    await consumidor.conectar()
+    await publicador.conectar()
+    await publicador.publicar(tipo, {})
+    await asyncio.wait_for(logrado, 10)
+    await consumidor._canal.queue_delete(f"{consumidor.servicio}.eventos")
+    await consumidor.cerrar()
+
+    assert momentos[1] - momentos[0] >= 0.3
