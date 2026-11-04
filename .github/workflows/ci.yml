@@ -1,4 +1,5 @@
-# Valida que docker-compose.yml sea correcto usando el .env de ejemplo.
+# Valida el código, los tests, las migraciones y el stack completo.
+# Las credenciales de PostgreSQL y RabbitMQ son las de desarrollo de .env.example, no son secretos.
 name: CI
 
 on:
@@ -7,11 +8,156 @@ on:
   pull_request:
 
 jobs:
-  infra:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+          cache: pip
+      - name: Instalar ruff
+        run: pip install ruff
+      - name: Revisar estilo y errores
+        run: ruff check .
+      - name: Revisar formato
+        run: ruff format --check .
+
+  servicios:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        carpeta:
+          - libs/mensajeria
+          - services/auth
+          - services/gateway
+          - services/eventos
+          - services/reservas
+          - services/pagos
+          - services/entradas
+          - services/notificaciones
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: entradas
+          POSTGRES_PASSWORD: cambia-esto-en-local
+          POSTGRES_DB: entradas
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U entradas -d entradas"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+      rabbitmq:
+        image: rabbitmq:4-alpine
+        env:
+          RABBITMQ_DEFAULT_USER: entradas
+          RABBITMQ_DEFAULT_PASS: cambia-esto-en-local
+        ports:
+          - 5672:5672
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+          cache: pip
+      - name: Instalar dependencias comunes
+        run: pip install -r requirements-dev.txt -e libs/mensajeria -e libs/basedatos
+      - name: Instalar dependencias del servicio
+        run: |
+          if [ -f "${{ matrix.carpeta }}/requirements.txt" ]; then
+            pip install -r "${{ matrix.carpeta }}/requirements.txt"
+          fi
+      - name: Correr tests
+        working-directory: ${{ matrix.carpeta }}
+        run: python -m pytest -q
+
+  migraciones:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        servicio: [auth, eventos, reservas, pagos, entradas, notificaciones]
+    env:
+      DATABASE_URL: postgresql+asyncpg://entradas:cambia-esto-en-local@localhost:5432/entradas
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: entradas
+          POSTGRES_PASSWORD: cambia-esto-en-local
+          POSTGRES_DB: entradas
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U entradas -d entradas"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+          cache: pip
+      - name: Instalar dependencias comunes
+        run: pip install -r requirements-dev.txt -e libs/mensajeria -e libs/basedatos
+      - name: Instalar dependencias del servicio
+        run: pip install -r services/${{ matrix.servicio }}/requirements.txt
+      - name: Aplicar migraciones
+        working-directory: services/${{ matrix.servicio }}
+        run: alembic upgrade head
+      - name: Comprobar que los modelos coinciden con las migraciones
+        working-directory: services/${{ matrix.servicio }}
+        run: alembic check
+
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Instalar dependencias
+        run: npm ci
+      - name: Revisar tipos
+        run: npx tsc --noEmit
+      - name: Correr tests
+        run: npx vitest run
+      - name: Compilar
+        run: npm run build
+
+  e2e:
+    needs: [servicios, web]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+          cache: pip
       - name: Preparar .env de ejemplo
         run: cp .env.example .env
-      - name: Validar docker compose
-        run: docker compose config -q
+      - name: Levantar el stack
+        run: docker compose up -d --build --wait
+      - name: Instalar dependencias de e2e
+        run: pip install pytest httpx
+      - name: Correr tests e2e
+        working-directory: e2e
+        run: python -m pytest -q
+      - name: Mostrar logs si falló
+        if: failure()
+        run: docker compose logs --tail=100

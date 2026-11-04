@@ -201,3 +201,4 @@ origen porque nginx hace de proxy de `/api`.
   queda el error en el log.
 - **Límite de intentos de login en memoria.** Vale por instancia del gateway y se reinicia con ella.
 - **Pago simulado.** No hay pasarela real ni reembolsos.
+- **Validación sin separar por evento.** Un validador puede validar entradas de cualquier evento, y un organizador también las de eventos ajenos. El código del QR garantiza que la entrada es auténtica, no que sea de ese evento.
