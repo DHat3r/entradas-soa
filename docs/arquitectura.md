@@ -55,6 +55,7 @@ Cola durable `rpc.<servicio>`. El cliente usa `reply_to` y `correlation_id`, y e
 | `prohibido` | 403 |
 | `no_encontrado` | 404 |
 | `conflicto` | 409 |
+| `no_disponible` | 503 |
 | Sin respuesta en 5 s | 504 |
 
 Un error inesperado responde `{"codigo": "interno"}` (HTTP 500) sin detalles: el detalle queda en
@@ -150,7 +151,7 @@ Una reserva en `PAGANDO` no vence: `pago.solicitado` está en una cola durable y
 | `pago.aprobado` | pagos | reservas | `reserva_id, pago_id` |
 | `pago.rechazado` | pagos | reservas | `reserva_id, pago_id` |
 | `reserva.confirmada` | reservas | entradas | `reserva_id, cliente_id, cliente_correo, evento_id, evento_nombre, sector_nombre, cantidad` |
-| `reserva.cancelada` | reservas | eventos | `reserva_id, motivo` (`rechazada`, `vencida`, `error`) |
+| `reserva.cancelada` | reservas | eventos | `reserva_id, sector_id, motivo` (`rechazada`, `vencida`, `error`) |
 | `entradas.emitidas` | entradas | notificaciones | `reserva_id, cliente_correo, evento_nombre, sector_nombre, entradas[{id, codigo}]` |
 
 ## Reglas que no se pueden romper
@@ -165,7 +166,12 @@ Si no afecta filas, no hay cupos. Leer y luego escribir permitiría que dos comp
 
 **Liberar una sola vez.** La tabla `apartados` (`reserva_id` como clave primaria) hace idempotentes las
 dos operaciones: apartar dos veces la misma reserva no descuenta de nuevo, y liberar solo suma si
-`liberado` pasa de falso a verdadero.
+`liberado` pasa de falso a verdadero. Si la cancelación llega antes que un `apartar_cupos` atrasado,
+deja un apartado ya liberado y sin cantidad, y ese pedido se rechaza.
+
+**Publicar antes del commit.** Cada transición de la saga publica su evento dentro de la transacción.
+Si publicar falla, se revierte y RabbitMQ reintenta. Si la respuesta llega antes del commit, su
+`UPDATE` espera el bloqueo de la fila y luego ve el estado nuevo.
 
 **El precio lo pone el servidor.** `reservas` calcula el monto con el precio que devuelve `eventos`.
 Los montos son enteros en pesos chilenos.
@@ -185,8 +191,12 @@ origen porque nginx hace de proxy de `/api`.
 
 ## Límites conocidos
 
-- **Sin *outbox*.** Si un servicio cae entre guardar y publicar, el evento se pierde. Una reserva
-  aún sin pagar se recupera sola al vencer, pero un pago aprobado podría quedar sin confirmar.
+- **Sin *outbox*.** Si un servicio cae justo después de publicar y antes del commit, el evento ya
+  salió pero el estado no cambió. Al procesar un mensaje entrante se recupera solo, porque RabbitMQ
+  lo reentrega. En `pagar` no: la reserva sigue pendiente, el resultado del pago se ignora y el cupo
+  se libera al vencer.
+- **Sin límite de reservas por cliente.** Alguien podría apartar cupos una y otra vez sin pagar;
+  cada reserva se limita a 6 entradas y vence en 10 minutos.
 - **Sin cola de mensajes fallidos.** Tras 5 entregas fallidas, RabbitMQ descarta el mensaje y solo
   queda el error en el log.
 - **Límite de intentos de login en memoria.** Vale por instancia del gateway y se reinicia con ella.

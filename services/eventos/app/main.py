@@ -5,6 +5,7 @@ from basedatos import crear_motor, crear_sesiones
 from mensajeria import Bus, ejecutar_servicio
 
 from app.acciones import registrar_acciones
+from app.cupos import registrar_cupos
 
 
 async def main() -> None:
@@ -12,6 +13,7 @@ async def main() -> None:
 
     bus = Bus(os.environ["RABBITMQ_URL"], "eventos")
     registrar_acciones(bus, sesiones)
+    registrar_cupos(bus, sesiones)
     await ejecutar_servicio(bus)
 
 

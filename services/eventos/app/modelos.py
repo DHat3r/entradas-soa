@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Integer, String, Text, func
+from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -44,3 +44,14 @@ class Sector(Base):
     precio_clp: Mapped[int] = mapped_column(Integer)
     capacidad: Mapped[int] = mapped_column(Integer)
     disponibles: Mapped[int] = mapped_column(Integer)
+
+
+class Apartado(Base):
+    """Cupos tomados por una reserva. Hace idempotente apartar y liberar."""
+
+    __tablename__ = "apartados"
+
+    reserva_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    sector_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("sectores.id"))
+    cantidad: Mapped[int] = mapped_column(Integer)
+    liberado: Mapped[bool] = mapped_column(Boolean, default=False)
