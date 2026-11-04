@@ -1,0 +1,226 @@
+/* Tokens compartidos por los dos sistemas. Cada sistema define sus colores de superficie. */
+:root {
+  --papel: #f6f1e7;
+  --papel-hondo: #ebe3d3;
+  --carton: #fffdf8;
+  --tinta: #1d1b17;
+  --tinta-suave: #5f5a50;
+  --linea: #d8cfbc;
+  --bermellon: #c8371f;
+  --bermellon-hondo: #a12a15;
+  --verde: #1f6b4a;
+  --verde-fondo: #dcefe4;
+  --rojo-fondo: #f9dfd8;
+  --ambar-fondo: #f7e8c4;
+  --ambar: #7a5608;
+
+  --fondo: var(--papel);
+  --superficie: var(--carton);
+  --texto: var(--tinta);
+  --texto-suave: var(--tinta-suave);
+  --borde: var(--linea);
+
+  --titulos: "Bricolage Grotesque Variable", system-ui, sans-serif;
+  --cuerpo: "Instrument Sans Variable", system-ui, sans-serif;
+  --radio: 6px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--fondo);
+  color: var(--texto);
+  font-family: var(--cuerpo);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-family: var(--titulos);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+:focus-visible {
+  outline: 3px solid var(--bermellon);
+  outline-offset: 2px;
+}
+
+/* ── Botones ─────────────────────────────────────────────────── */
+.boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.6rem 1.25rem;
+  border: 1.5px solid var(--texto);
+  border-radius: var(--radio);
+  background: var(--texto);
+  color: var(--fondo);
+  font: 600 1rem var(--cuerpo);
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background 120ms,
+    color 120ms,
+    transform 120ms;
+}
+
+.boton:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.boton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.boton-acento {
+  border-color: var(--bermellon);
+  background: var(--bermellon);
+  color: #fff;
+}
+
+.boton-acento:hover:not(:disabled) {
+  border-color: var(--bermellon-hondo);
+  background: var(--bermellon-hondo);
+}
+
+.boton-borde {
+  background: transparent;
+  color: var(--texto);
+}
+
+.boton-borde:hover:not(:disabled) {
+  background: var(--texto);
+  color: var(--fondo);
+}
+
+.boton-ancho {
+  width: 100%;
+}
+
+/* ── Formularios ─────────────────────────────────────────────── */
+.campo {
+  display: grid;
+  gap: 0.35rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.campo input,
+.campo select,
+.campo textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.6rem 0.75rem;
+  border: 1.5px solid var(--borde);
+  border-radius: var(--radio);
+  background: var(--superficie);
+  color: var(--texto);
+  font: 400 1rem var(--cuerpo);
+}
+
+.campo input:focus,
+.campo select:focus,
+.campo textarea:focus {
+  border-color: var(--bermellon);
+  outline: none;
+}
+
+.campo small {
+  color: var(--texto-suave);
+  font-weight: 400;
+}
+
+.formulario {
+  display: grid;
+  gap: 1rem;
+}
+
+/* ── Avisos y estados ────────────────────────────────────────── */
+.aviso {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radio);
+  font-size: 0.95rem;
+}
+
+.aviso-error {
+  background: var(--rojo-fondo);
+  color: var(--bermellon-hondo);
+}
+
+.aviso-exito {
+  background: var(--verde-fondo);
+  color: var(--verde);
+}
+
+.aviso-info {
+  background: var(--ambar-fondo);
+  color: var(--ambar);
+}
+
+.cargando {
+  padding: 3rem 0;
+  color: var(--texto-suave);
+  text-align: center;
+}
+
+.vacio {
+  padding: 3rem 1.5rem;
+  border: 1.5px dashed var(--borde);
+  border-radius: var(--radio);
+  color: var(--texto-suave);
+  text-align: center;
+}
+
+.etiqueta {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* Visible solo para lectores de pantalla. */
+.sr-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
