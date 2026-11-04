@@ -1,0 +1,12 @@
+# Solo para desarrollo y CI: abre PostgreSQL, RabbitMQ y el gateway a esta máquina para correr tests.
+# docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d postgres rabbitmq
+services:
+  postgres:
+    ports:
+      - "127.0.0.1:5432:5432"
+  rabbitmq:
+    ports:
+      - "127.0.0.1:5672:5672"
+  gateway:
+    ports:
+      - "127.0.0.1:18000:8000"

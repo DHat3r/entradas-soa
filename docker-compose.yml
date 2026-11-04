@@ -1,5 +1,19 @@
 name: entradas-soa
 
+# Configuración común de los servicios Python. Los nombres de postgres y rabbitmq
+# solo existen dentro de la red de Docker: ninguno de los dos publica su puerto aquí.
+x-servicio: &servicio
+  restart: on-failure:5
+  depends_on:
+    postgres:
+      condition: service_healthy
+    rabbitmq:
+      condition: service_healthy
+
+x-conexiones: &conexiones
+  DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:?falta POSTGRES_USER}:${POSTGRES_PASSWORD:?falta POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:?falta POSTGRES_DB}
+  RABBITMQ_URL: amqp://${RABBITMQ_USER:?falta RABBITMQ_USER}:${RABBITMQ_PASSWORD:?falta RABBITMQ_PASSWORD}@rabbitmq:5672/
+
 services:
   postgres:
     image: postgres:17-alpine
@@ -11,8 +25,9 @@ services:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
-    ports:
-      - "127.0.0.1:5432:5432"
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
   rabbitmq:
     image: rabbitmq:4-management-alpine
@@ -25,14 +40,38 @@ services:
       timeout: 5s
       retries: 20
     ports:
-      - "127.0.0.1:5672:5672"
+      # Solo el panel de administración, y solo en esta máquina.
       - "127.0.0.1:${RABBITMQ_UI_PORT:-15672}:15672"
 
   mailpit:
     image: axllent/mailpit:v1.27
     ports:
       - "127.0.0.1:${MAILPIT_UI_PORT:-8025}:8025"
-      - "127.0.0.1:1025:1025"
+
+  auth:
+    <<: *servicio
+    build:
+      context: .
+      dockerfile: services/auth/Dockerfile
+    environment:
+      <<: *conexiones
+      JWT_SECRET: ${JWT_SECRET:?falta JWT_SECRET}
+      SEED_ORGANIZADOR_CORREO: ${SEED_ORGANIZADOR_CORREO:?falta SEED_ORGANIZADOR_CORREO}
+      SEED_VALIDADOR_CORREO: ${SEED_VALIDADOR_CORREO:?falta SEED_VALIDADOR_CORREO}
+      SEED_PASSWORD: ${SEED_PASSWORD:?falta SEED_PASSWORD}
+
+  gateway:
+    build:
+      context: .
+      dockerfile: services/gateway/Dockerfile
+    restart: on-failure:5
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:?falta RABBITMQ_USER}:${RABBITMQ_PASSWORD:?falta RABBITMQ_PASSWORD}@rabbitmq:5672/
+      JWT_SECRET: ${JWT_SECRET:?falta JWT_SECRET}
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
 
 volumes:
   postgres-data:

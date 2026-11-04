@@ -1,0 +1,9 @@
+line-length = 100
+
+[lint]
+select = ["E", "F", "I", "UP", "B"]
+# B008: Depends() y Body() en valores por defecto son el patrón normal de FastAPI.
+ignore = ["B008"]
+
+[lint.isort]
+known-first-party = ["app"]
