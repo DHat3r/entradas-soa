@@ -36,7 +36,7 @@
   text-decoration: none;
 }
 
-.in-marca img {
+.in-marca .logo {
   width: 28px;
   height: 28px;
 }
@@ -65,7 +65,7 @@
 
 .in-nav a[aria-current="page"] {
   color: var(--texto);
-  background: var(--exito-fondo);
+  background: var(--seleccion-fondo);
   box-shadow: inset 3px 0 0 var(--acento);
 }
 
@@ -368,6 +368,6 @@
 }
 
 .in-panel-ok .in-simbolo {
-  background: var(--acento);
-  color: var(--sobre-acento);
+  background: var(--exito);
+  color: var(--exito-fondo);
 }

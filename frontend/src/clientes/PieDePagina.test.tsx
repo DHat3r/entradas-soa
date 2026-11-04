@@ -3,6 +3,7 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Rol } from "../lib/api";
 import { useSesion } from "../lib/sesion";
+import { ProveedorDeTema } from "../lib/tema";
 import { PieDePagina } from "./PieDePagina";
 
 vi.mock("../lib/sesion", () => ({ useSesion: vi.fn() }));
@@ -16,7 +17,9 @@ function mostrarCon(rol: Rol | null) {
   });
   render(
     <MemoryRouter>
-      <PieDePagina />
+      <ProveedorDeTema>
+        <PieDePagina />
+      </ProveedorDeTema>
     </MemoryRouter>,
   );
 }

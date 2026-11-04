@@ -5,6 +5,7 @@
   --fondo: #06110d;
   --superficie: #0d1b16;
   --superficie-alta: #13261f;
+  --seleccion-fondo: #0f3326;
   --borde: #21372e;
   --borde-fuerte: #35534a;
   --borde-control: #5a7a6e;
@@ -15,6 +16,14 @@
   --acento-claro: #5ce8b5;
   --sobre-acento: #03140d;
   --brillo-acento: rgb(37 214 149 / 28%);
+  --resplandor-1: rgb(37 214 149 / 16%);
+  --resplandor-2: rgb(37 214 149 / 7%);
+  --resplandor-tarjeta: rgb(37 214 149 / 12%);
+  --cabecera-fondo: rgb(13 27 22 / 82%);
+  --bloque-medio: #0a1713;
+  --sombra-suave: rgb(0 0 0 / 45%);
+  --sombra-fuerte: rgb(0 0 0 / 50%);
+  --logo: url("/icono.svg");
 
   --exito: #7bebbf;
   --exito-fondo: #0f3326;
@@ -27,6 +36,41 @@
   --cuerpo: "Inter Variable", system-ui, sans-serif;
   --radio: 10px;
   --radio-grande: 20px;
+}
+
+/* Modo claro: café claro con blanco pastel. Solo cambian los tokens, no las reglas. */
+:root[data-tema="claro"] {
+  color-scheme: light;
+
+  --fondo: #f4eadd;
+  --superficie: #fffaf2;
+  --superficie-alta: #f0e3d2;
+  --seleccion-fondo: #efdfca;
+  --borde: #e2d3bf;
+  --borde-fuerte: #cdb89f;
+  --borde-control: #8d7259;
+  --texto: #2f2118;
+  --texto-suave: #66513f;
+
+  --acento: #7b4a24;
+  --acento-claro: #653b1b;
+  --sobre-acento: #fffaf2;
+  --brillo-acento: rgb(123 74 36 / 22%);
+  --resplandor-1: rgb(190 140 95 / 22%);
+  --resplandor-2: rgb(190 140 95 / 12%);
+  --resplandor-tarjeta: rgb(123 74 36 / 10%);
+  --cabecera-fondo: rgb(255 250 242 / 85%);
+  --bloque-medio: #f8efe3;
+  --sombra-suave: rgb(84 55 30 / 14%);
+  --sombra-fuerte: rgb(84 55 30 / 18%);
+  --logo: url("/icono-claro.svg");
+
+  --exito: #1e5a3f;
+  --exito-fondo: #dcebdd;
+  --error: #8e2a18;
+  --error-fondo: #f8e0d8;
+  --aviso: #6d4e0a;
+  --aviso-fondo: #f6e8c6;
 }
 
 * {
@@ -85,6 +129,37 @@ img {
   color: var(--acento);
   font-style: italic;
   font-weight: 800;
+}
+
+/* El logo cambia de color con el tema. */
+.logo {
+  display: block;
+  flex: none;
+  background: var(--logo) center / contain no-repeat;
+}
+
+.boton-tema {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--texto);
+  cursor: pointer;
+}
+
+.boton-tema:hover {
+  border-color: var(--acento);
+  color: var(--acento);
+}
+
+.boton-tema svg {
+  width: 18px;
+  height: 18px;
 }
 
 /* ── Botones ─────────────────────────────────────────────────── */

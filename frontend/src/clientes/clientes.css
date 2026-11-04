@@ -71,7 +71,7 @@
 
 .opcion-sector:has(input:checked) {
   border-color: var(--acento);
-  background: var(--exito-fondo);
+  background: var(--seleccion-fondo);
   box-shadow: 0 0 0 1px var(--acento);
 }
 

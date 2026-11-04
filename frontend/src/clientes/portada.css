@@ -15,8 +15,8 @@
   z-index: -1;
   height: 900px;
   background:
-    radial-gradient(ellipse 60% 55% at 62% 18%, rgb(37 214 149 / 16%), transparent 70%),
-    radial-gradient(ellipse 45% 40% at 12% 0%, rgb(37 214 149 / 7%), transparent 70%);
+    radial-gradient(ellipse 60% 55% at 62% 18%, var(--resplandor-1), transparent 70%),
+    radial-gradient(ellipse 45% 40% at 12% 0%, var(--resplandor-2), transparent 70%);
   pointer-events: none;
 }
 
@@ -34,7 +34,7 @@
   padding: 0.5rem 0.6rem 0.5rem 1rem;
   border: 1px solid var(--borde);
   border-radius: 999px;
-  background: rgb(13 27 22 / 82%);
+  background: var(--cabecera-fondo);
   backdrop-filter: blur(12px);
 }
 
@@ -48,7 +48,7 @@
   text-decoration: none;
 }
 
-.cl-marca img {
+.cl-marca .logo {
   width: 24px;
   height: 24px;
 }
@@ -62,7 +62,7 @@
 }
 
 .cl-nav a:not(.boton),
-.cl-nav button:not(.boton) {
+.cl-nav button:not(.boton, .boton-tema) {
   padding: 0.5rem 0.65rem;
   border: 0;
   border-radius: 999px;
@@ -74,7 +74,7 @@
 }
 
 .cl-nav a:not(.boton):hover,
-.cl-nav button:not(.boton):hover {
+.cl-nav button:not(.boton, .boton-tema):hover {
   color: var(--texto);
 }
 
@@ -174,8 +174,8 @@
   border-radius: var(--radio-grande);
   background: linear-gradient(160deg, var(--superficie-alta), var(--superficie));
   box-shadow:
-    0 30px 80px rgb(0 0 0 / 50%),
-    0 0 90px rgb(37 214 149 / 12%);
+    0 30px 80px var(--sombra-fuerte),
+    0 0 90px var(--resplandor-tarjeta);
 }
 
 .muestra-rotulo {
@@ -219,7 +219,7 @@
   border: 1px solid var(--borde-fuerte);
   border-radius: 14px;
   background: var(--superficie-alta);
-  box-shadow: 0 14px 40px rgb(0 0 0 / 50%);
+  box-shadow: 0 14px 40px var(--sombra-fuerte);
 }
 
 .muestra-sello i {
@@ -416,7 +416,7 @@ a.boleto:hover {
   height: 42px;
   margin-bottom: 1.25rem;
   border-radius: 12px;
-  background: var(--exito-fondo);
+  background: var(--seleccion-fondo);
   color: var(--acento);
 }
 
@@ -444,7 +444,7 @@ a.boleto:hover {
   padding: 2rem 1.5rem;
   border: 1px solid var(--borde);
   border-radius: 28px;
-  background: linear-gradient(120deg, var(--superficie), #0a1713 60%, var(--superficie-alta));
+  background: linear-gradient(120deg, var(--superficie), var(--bloque-medio) 60%, var(--superficie-alta));
 }
 
 .bloque h2 {
@@ -479,7 +479,7 @@ a.boleto:hover {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: var(--exito-fondo);
+  background: var(--seleccion-fondo);
   color: var(--acento);
   font-size: 0.75rem;
   font-weight: 800;
@@ -492,7 +492,7 @@ a.boleto:hover {
   border: 1px solid var(--borde-fuerte);
   border-radius: var(--radio-grande);
   background: var(--fondo);
-  box-shadow: 0 24px 60px rgb(0 0 0 / 45%);
+  box-shadow: 0 24px 60px var(--sombra-suave);
 }
 
 .reserva-muestra dl {
@@ -606,7 +606,11 @@ a.boleto:hover {
 }
 
 .cl-pie-legal {
+  display: flex;
   grid-column: 1 / -1;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
   padding-top: 1.5rem;
   border-top: 1px solid var(--borde);
   color: var(--texto-suave);
@@ -636,6 +640,11 @@ a.boleto:hover {
 }
 
 @media (max-width: 460px) {
+  /* Aquí no cabe en la cabecera: el botón de tema queda solo en el pie. */
+  .cl-cabecera .boton-tema {
+    display: none;
+  }
+
   .muestra-sello {
     right: 8px;
   }
@@ -654,7 +663,7 @@ a.boleto:hover {
   }
 
   .cl-nav a:not(.boton),
-  .cl-nav button:not(.boton) {
+  .cl-nav button:not(.boton, .boton-tema) {
     padding-inline: 0.4rem;
   }
 

@@ -7,6 +7,21 @@
     <meta name="description" content="Compra entradas para eventos en Chile." />
     <link rel="icon" type="image/svg+xml" href="/icono.svg" />
     <title>Taquilla</title>
+    <script>
+      // Va aquí, antes de pintar, para que el tema no parpadee al cargar.
+      try {
+        var guardado = localStorage.getItem("tema");
+        var claro = guardado
+          ? guardado === "claro"
+          : matchMedia("(prefers-color-scheme: light)").matches;
+        document.documentElement.dataset.tema = claro ? "claro" : "oscuro";
+        if (claro) {
+          document.querySelector('meta[name="theme-color"]').content = "#f4eadd";
+        }
+      } catch (e) {
+        document.documentElement.dataset.tema = "oscuro";
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

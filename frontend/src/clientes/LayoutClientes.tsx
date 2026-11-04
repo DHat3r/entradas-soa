@@ -1,5 +1,6 @@
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import { useSesion } from "../lib/sesion";
+import { BotonTema } from "../lib/tema";
 import "./clientes.css";
 import { PieDePagina } from "./PieDePagina";
 import "./portada.css";
@@ -23,10 +24,11 @@ export function LayoutClientes() {
           aria-label="Taquilla, ir al inicio"
           onClick={() => window.scrollTo({ top: 0 })}
         >
-          <img src="/icono.svg" alt="" />
+          <i className="logo" aria-hidden="true" />
           <span>Taquilla</span>
         </Link>
         <nav className="cl-nav" aria-label="Principal">
+          <BotonTema />
           {usuario ? (
             <>
               {usuario.rol === "cliente" ? (

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useSesion } from "../lib/sesion";
+import { BotonTema } from "../lib/tema";
 
 const REPOSITORIO = "https://github.com/DHat3r/entradas-soa";
 
@@ -14,7 +15,7 @@ export function PieDePagina() {
       <div className="cl-pie-interior">
         <div className="cl-pie-marca">
           <Link to="/" className="cl-marca" aria-label="Taquilla">
-            <img src="/icono.svg" alt="" />
+            <i className="logo" aria-hidden="true" />
             <span>Taquilla</span>
           </Link>
           <p>Venta de entradas hecha con servicios independientes que se comunican por RabbitMQ.</p>
@@ -65,10 +66,13 @@ export function PieDePagina() {
             </ul>
           </nav>
         </div>
-        <p className="cl-pie-legal">
-          Proyecto de portafolio. Los pagos son simulados y, en local, los correos se capturan en
-          Mailpit.
-        </p>
+        <div className="cl-pie-legal">
+          <p>
+            Proyecto de portafolio. Los pagos son simulados y, en local, los correos se capturan en
+            Mailpit.
+          </p>
+          <BotonTema />
+        </div>
       </div>
     </footer>
   );
