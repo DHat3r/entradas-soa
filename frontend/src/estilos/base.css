@@ -7,6 +7,7 @@
   --superficie-alta: #13261f;
   --borde: #21372e;
   --borde-fuerte: #35534a;
+  --borde-control: #5a7a6e;
   --texto: #f1f7f4;
   --texto-suave: #a3b5ad;
 
@@ -151,7 +152,7 @@ img {
   width: 100%;
   min-height: 44px;
   padding: 0.6rem 0.75rem;
-  border: 1px solid var(--borde-fuerte);
+  border: 1px solid var(--borde-control);
   border-radius: var(--radio);
   background: var(--fondo);
   color: var(--texto);
