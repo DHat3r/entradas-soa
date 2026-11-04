@@ -18,16 +18,26 @@ PASSWORD_SEED = "Demo1234!"
 ESPERA_SAGA_SEGUNDOS = 20
 
 
-def ingresar(correo: str, password: str) -> httpx.Client:
-    cliente = httpx.Client(base_url=f"{WEB}/api", timeout=15)
-    # El gateway limita los intentos de login por minuto: si se corre seguido, hay que esperar.
+def enviar_con_limite(cliente: httpx.Client, ruta: str, datos: dict) -> httpx.Response:
+    """El gateway limita los intentos por minuto: si se corre seguido, hay que esperar."""
     for _ in range(8):
-        respuesta = cliente.post("/auth/login", json={"correo": correo, "password": password})
+        respuesta = cliente.post(ruta, json=datos)
         if respuesta.status_code != 429:
             break
         time.sleep(10)
+    return respuesta
+
+
+def ingresar(correo: str, password: str) -> httpx.Client:
+    cliente = httpx.Client(base_url=f"{WEB}/api", timeout=15)
+    respuesta = enviar_con_limite(cliente, "/auth/login", {"correo": correo, "password": password})
     assert respuesta.status_code == 200, respuesta.text
     return cliente
+
+
+def registrar(datos: dict) -> httpx.Response:
+    with httpx.Client(base_url=f"{WEB}/api", timeout=15) as cliente:
+        return enviar_con_limite(cliente, "/auth/registro", datos)
 
 
 @pytest.fixture(scope="module")
@@ -48,7 +58,7 @@ def correo_cliente():
 @pytest.fixture(scope="module")
 def comprador(correo_cliente):
     datos = {"nombre": "Prueba E2E", "correo": correo_cliente, "password": "Clave1234"}
-    assert httpx.post(f"{WEB}/api/auth/registro", json=datos, timeout=15).status_code == 201
+    assert registrar(datos).status_code == 201
     return ingresar(correo_cliente, "Clave1234")
 
 
@@ -181,10 +191,8 @@ def test_sin_sesion_no_se_puede_comprar():
 
 def test_el_registro_publico_no_permite_elegir_rol():
     correo = f"e2e-{uuid.uuid4().hex[:8]}@correo.cl"
-    respuesta = httpx.post(
-        f"{WEB}/api/auth/registro",
-        json={"nombre": "Colada", "correo": correo, "password": "Clave1234", "rol": "organizador"},
-        timeout=15,
+    respuesta = registrar(
+        {"nombre": "Colada", "correo": correo, "password": "Clave1234", "rol": "organizador"}
     )
 
     assert respuesta.json()["rol"] == "cliente"

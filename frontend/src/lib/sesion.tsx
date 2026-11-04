@@ -82,7 +82,8 @@ export function RequiereRol({
 
 /** Evita redirecciones a otros sitios: solo se aceptan rutas internas. */
 export function rutaSegura(volver: string | null, porDefecto: string): string {
-  // El navegador trata la barra invertida como una normal: "/\\malo.cl" sale del sitio.
-  const interna = volver?.startsWith("/") && !volver.startsWith("//") && !volver.startsWith("/\\");
-  return interna ? volver! : porDefecto;
+  if (!volver?.startsWith("/")) return porDefecto;
+  // Se interpreta igual que el navegador, porque este ignora tabulaciones y trata "\\" como "/".
+  const url = new URL(volver, window.location.origin);
+  return url.origin === window.location.origin ? url.pathname + url.search + url.hash : porDefecto;
 }
