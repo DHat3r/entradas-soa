@@ -132,9 +132,19 @@ a.boleto:hover {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  position: relative;
   padding: 1rem 0.5rem;
-  border-right: 2px dashed var(--linea);
   font-family: var(--titulos);
+}
+
+/* La línea punteada no toca las muescas: un borde normal se vería dentro de los semicírculos. */
+.boleto-fecha::after {
+  content: "";
+  position: absolute;
+  top: calc(var(--muesca) + 4px);
+  right: -1px;
+  bottom: calc(var(--muesca) + 4px);
+  border-right: 2px dashed var(--linea);
 }
 
 .boleto-dia {
