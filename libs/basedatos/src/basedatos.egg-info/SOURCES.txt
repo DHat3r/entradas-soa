@@ -1,8 +1,0 @@
-pyproject.toml
-src/basedatos/__init__.py
-src/basedatos/migraciones.py
-src/basedatos.egg-info/PKG-INFO
-src/basedatos.egg-info/SOURCES.txt
-src/basedatos.egg-info/dependency_links.txt
-src/basedatos.egg-info/requires.txt
-src/basedatos.egg-info/top_level.txt

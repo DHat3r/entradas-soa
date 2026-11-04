@@ -1,3 +1,0 @@
-sqlalchemy[asyncio]<3,>=2.0.36
-asyncpg>=0.30
-alembic<2,>=1.14
