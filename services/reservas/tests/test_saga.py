@@ -5,10 +5,10 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from basedatos import sesiones_de_prueba
 from mensajeria import BusDePrueba, ErrorDeNegocio, SinRespuesta
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from app.modelos import Base, Reserva
-from app.saga import registrar_saga, vencer_reservas
+from app.saga import registrar_saga, reparar_reservas, vencer_reservas
 
 ANA = {"usuario_id": str(uuid.uuid4()), "rol": "cliente", "correo": "ana@correo.cl"}
 BETO = {"usuario_id": str(uuid.uuid4()), "rol": "cliente", "correo": "beto@correo.cl"}
@@ -270,22 +270,83 @@ async def test_una_reserva_pagando_no_vence(bus, sesiones):
     assert await estado(sesiones, reserva["id"]) == "PAGANDO"
 
 
-async def test_carrera_entre_pagar_y_vencer_tiene_un_solo_ganador(bus, sesiones):
-    for _ in range(10):
-        reserva = await nueva_reserva(bus)
-        await vencer_plazo(sesiones, reserva["id"])
-        bus.publicados.clear()
+async def test_vencimiento_salta_la_fila_bloqueada_y_la_toma_en_la_vuelta_siguiente(bus, sesiones):
+    reserva = await nueva_reserva(bus)
+    await vencer_plazo(sesiones, reserva["id"])
 
-        await asyncio.gather(
-            bus.llamar(
-                "pagar", {"reserva_id": reserva["id"], "resultado_simulado": "aprobar"}, ANA
-            ),
-            vencer_reservas(bus, sesiones),
-            return_exceptions=True,
+    async with sesiones() as otra_transaccion:
+        await otra_transaccion.scalar(
+            select(Reserva).where(Reserva.id == uuid.UUID(reserva["id"])).with_for_update()
         )
+        assert await vencer_reservas(bus, sesiones) == 0
 
-        assert await estado(sesiones, reserva["id"]) == "VENCIDA"
-        assert tipos(bus) == ["reserva.cancelada"]
+    assert await vencer_reservas(bus, sesiones) == 1
+
+
+async def test_pagar_con_plazo_vigente_y_vencimiento_a_la_vez_deja_pagando(bus, sesiones):
+    reserva = await nueva_reserva(bus)
+
+    await asyncio.gather(
+        bus.llamar("pagar", {"reserva_id": reserva["id"], "resultado_simulado": "aprobar"}, ANA),
+        vencer_reservas(bus, sesiones),
+    )
+
+    assert await estado(sesiones, reserva["id"]) == "PAGANDO"
+    assert tipos(bus) == ["pago.solicitado"]
+
+
+async def envejecer(sesiones, reserva_id: str) -> None:
+    async with sesiones() as sesion:
+        reserva = await sesion.get(Reserva, uuid.UUID(reserva_id))
+        reserva.transicion_en = datetime.now(UTC) - timedelta(minutes=5)
+        await sesion.commit()
+
+
+async def test_reparacion_reenvia_el_pago_de_una_reserva_atascada_con_su_resultado(bus, sesiones):
+    reserva = await nueva_reserva(bus)
+    await bus.llamar("pagar", {"reserva_id": reserva["id"], "resultado_simulado": "rechazar"}, ANA)
+    await envejecer(sesiones, reserva["id"])
+    bus.publicados.clear()
+
+    assert await reparar_reservas(bus, sesiones) == 1
+
+    tipo, datos = bus.publicados[-1]
+    assert tipo == "pago.solicitado"
+    assert datos["resultado_simulado"] == "rechazar"
+    assert datos["monto_clp"] == 30000
+
+
+async def test_reparacion_espera_el_margen_y_no_reenvia_en_cada_vuelta(bus, sesiones):
+    reserva = await pagando(bus)
+
+    assert await reparar_reservas(bus, sesiones) == 0
+
+    await envejecer(sesiones, reserva["id"])
+    assert await reparar_reservas(bus, sesiones) == 1
+    assert await reparar_reservas(bus, sesiones) == 0
+
+
+async def test_reparacion_reenvia_la_confirmacion_hasta_que_se_emitan_las_entradas(bus, sesiones):
+    reserva = await pagando(bus)
+    await bus.entregar("pago.aprobado", {"reserva_id": reserva["id"]})
+    await envejecer(sesiones, reserva["id"])
+
+    assert await reparar_reservas(bus, sesiones) == 1
+    assert bus.publicados[-1][0] == "reserva.confirmada"
+
+    await envejecer(sesiones, reserva["id"])
+    await bus.entregar("entradas.emitidas", {"reserva_id": reserva["id"]})
+    assert await reparar_reservas(bus, sesiones) == 0
+
+
+async def test_error_interno_al_apartar_cancela_y_compensa(bus, sesiones):
+    bus.respuestas[("eventos", "apartar_cupos")] = ErrorDeNegocio("interno", "Error interno")
+
+    with pytest.raises(ErrorDeNegocio) as error:
+        await nueva_reserva(bus)
+
+    assert error.value.codigo == "no_disponible"
+    assert tipos(bus) == ["reserva.cancelada"]
 
 
 async def test_detalle_de_una_reserva_ajena_no_existe(bus):
@@ -304,3 +365,22 @@ async def test_listar_mias_solo_trae_las_propias(bus):
     reservas = await bus.llamar("listar_mias", identidad=ANA)
 
     assert len(reservas) == 1
+
+
+async def test_pago_que_llega_antes_del_commit_de_pagar_no_se_pierde(bus, sesiones):
+    reserva = await nueva_reserva(bus)
+    reserva_id = uuid.UUID(reserva["id"])
+
+    # Simula a pagar(): cambió el estado y publicó, pero su transacción sigue abierta.
+    async with sesiones() as transaccion_de_pagar:
+        await transaccion_de_pagar.execute(
+            update(Reserva).where(Reserva.id == reserva_id).values(estado="PAGANDO")
+        )
+        entrega = asyncio.create_task(bus.entregar("pago.aprobado", {"reserva_id": reserva["id"]}))
+        # Margen para que la entrega alcance a abrir su conexión.
+        await asyncio.sleep(2)
+        await transaccion_de_pagar.commit()
+    await entrega
+
+    assert await estado(sesiones, reserva["id"]) == "CONFIRMADA"
+    assert tipos(bus).count("reserva.confirmada") == 1
