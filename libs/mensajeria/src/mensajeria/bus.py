@@ -11,12 +11,14 @@ from typing import Any
 
 import aio_pika
 from aio_pika.abc import AbstractIncomingMessage
+from aiormq.exceptions import ChannelInvalidStateError
 from pydantic import ValidationError
 
 from mensajeria.errores import ErrorDeNegocio, SinRespuesta
 
 EXCHANGE_EVENTOS = "entradas.eventos"
 TIEMPO_RESPUESTA_SEGUNDOS = 5.0
+TIEMPO_PUBLICACION_SEGUNDOS = 10.0
 # Intentos por evento. Con la espera creciente suman unos 3 minutos antes de descartarlo.
 MAX_INTENTOS_EVENTO = 10
 ESPERA_MAXIMA_SEGUNDOS = 30.0
@@ -119,7 +121,12 @@ class Bus:
                 timeout=tiempo,
             )
             respuesta = await asyncio.wait_for(futuro, tiempo)
-        except (TimeoutError, ConnectionError, aio_pika.exceptions.AMQPError) as error:
+        except (
+            TimeoutError,
+            ConnectionError,
+            aio_pika.exceptions.AMQPError,
+            ChannelInvalidStateError,
+        ) as error:
             raise SinRespuesta(f"{servicio}.{accion} no respondió") from error
         finally:
             self._pendientes.pop(correlacion, None)
@@ -144,6 +151,7 @@ class Bus:
                 delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
             ),
             routing_key=tipo,
+            timeout=TIEMPO_PUBLICACION_SEGUNDOS,
         )
 
     async def _al_recibir_respuesta(self, mensaje: AbstractIncomingMessage) -> None:
@@ -205,17 +213,24 @@ class Bus:
             # intentos en milisegundos.
             await asyncio.sleep(min(self._espera_base * 2 ** (intento - 1), ESPERA_MAXIMA_SEGUNDOS))
             # Se republica con la cuenta en un encabezado propio. x-delivery-limit no sirve aquí:
-            # en RabbitMQ 4 un nack con requeue no cuenta como entrega fallida (lo prueba un test).
-            await self._canal.default_exchange.publish(
-                aio_pika.Message(
-                    mensaje.body,
-                    content_type="application/json",
-                    message_id=mensaje.message_id,
-                    delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
-                    headers={ENCABEZADO_INTENTOS: intento},
-                ),
-                routing_key=f"{self.servicio}.eventos",
-            )
+            # al probarlo con RabbitMQ 4, un nack con requeue se reentregó sin fin y sin contarse.
+            try:
+                await self._canal.default_exchange.publish(
+                    aio_pika.Message(
+                        mensaje.body,
+                        content_type="application/json",
+                        message_id=mensaje.message_id,
+                        delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
+                        headers={ENCABEZADO_INTENTOS: intento},
+                    ),
+                    routing_key=f"{self.servicio}.eventos",
+                    timeout=TIEMPO_PUBLICACION_SEGUNDOS,
+                )
+            except Exception:
+                # Sin confirmar, el mensaje quedaría retenido: se devuelve para no perderlo.
+                log.exception("No se pudo republicar un evento en %s", self.servicio)
+                await mensaje.nack(requeue=True)
+                return
             await mensaje.ack()
         else:
             await mensaje.ack()
