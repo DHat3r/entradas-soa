@@ -30,7 +30,7 @@ Hay dos sistemas en la misma web: clientes (`/`) e interno (`/interno`).
 
 ### Dos temas
 
-La web sigue la preferencia del sistema operativo la primera vez, y después recuerda la que elijas con el botón de la cabecera.
+La web sigue la preferencia del sistema operativo la primera vez, y después recuerda la que elijas con el botón de tema.
 
 ![Portada en modo claro, en café claro con blanco pastel](docs/capturas/portada-claro.png)
 *Modo claro: café claro con blanco pastel.*
@@ -165,8 +165,8 @@ Cantidad de tests por carpeta, contada con `python -m pytest --collect-only -q` 
 | `services/notificaciones` | 7 |
 | **Subtotal Python** | **136** |
 | `e2e` (necesita el stack) | 6 |
-| `frontend` (Vitest) | 24 |
-| **Total** | **166** |
+| `frontend` (Vitest) | 35 |
+| **Total** | **177** |
 
 `libs/basedatos` no tiene tests propios.
 

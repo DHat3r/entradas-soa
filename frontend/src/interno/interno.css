@@ -1,4 +1,4 @@
-/* Sistema interno: tema oscuro de herramienta de trabajo, con la misma marca que clientes. */
+/* Sistema interno: herramienta de trabajo densa, con la misma marca y temas que clientes. */
 .in-pagina {
   min-height: 100vh;
   background: var(--fondo);
@@ -345,7 +345,7 @@
 
 .in-panel-ok {
   background: var(--exito-fondo);
-  border-color: var(--acento);
+  border-color: var(--exito);
   color: var(--exito);
 }
 

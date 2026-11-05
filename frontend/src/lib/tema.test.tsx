@@ -39,14 +39,30 @@ describe("BotonTema", () => {
     expect(screen.getByRole("button", { name: "Cambiar a modo oscuro" })).toBeTruthy();
   });
 
+  it("dos botones se mantienen sincronizados", () => {
+    render(
+      <ProveedorDeTema>
+        <BotonTema />
+        <BotonTema />
+      </ProveedorDeTema>,
+    );
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Cambiar a modo claro" })[0]);
+
+    expect(screen.getAllByRole("button", { name: "Cambiar a modo oscuro" })).toHaveLength(2);
+  });
+
   it("sigue funcionando si el navegador no permite guardar", () => {
-    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+    const guardar = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
       throw new Error("Almacenamiento bloqueado");
     });
     mostrarBoton();
 
     fireEvent.click(screen.getByRole("button", { name: "Cambiar a modo claro" }));
 
+    expect(guardar).toHaveBeenCalled();
     expect(document.documentElement.dataset.tema).toBe("claro");
+    // Sin el try/catch, el error cortaría antes de actualizar el botón.
+    expect(screen.getByRole("button", { name: "Cambiar a modo oscuro" })).toBeTruthy();
   });
 });

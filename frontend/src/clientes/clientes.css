@@ -227,7 +227,7 @@
   overflow-wrap: anywhere;
 }
 
-/* El QR va sobre fondo blanco: sobre un fondo oscuro no se puede escanear. */
+/* El QR va siempre sobre blanco, en ambos temas: sobre otro fondo un lector puede no leerlo. */
 .entrada-qr img {
   width: min(220px, 100%);
   aspect-ratio: 1;

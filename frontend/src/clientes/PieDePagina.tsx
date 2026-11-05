@@ -14,7 +14,12 @@ export function PieDePagina() {
     <footer className="cl-pie">
       <div className="cl-pie-interior">
         <div className="cl-pie-marca">
-          <Link to="/" className="cl-marca" aria-label="Taquilla">
+          <Link
+            to="/"
+            className="cl-marca"
+            aria-label="Taquilla, ir al inicio"
+            onClick={() => window.scrollTo({ top: 0 })}
+          >
             <i className="logo" aria-hidden="true" />
             <span>Taquilla</span>
           </Link>

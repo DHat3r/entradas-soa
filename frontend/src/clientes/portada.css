@@ -7,7 +7,7 @@
   overflow-x: clip;
 }
 
-/* El resplandor verde detrás del hero. */
+/* El resplandor detrás del hero: su color depende del tema. */
 .cl-pagina::before {
   content: "";
   position: absolute;
@@ -274,7 +274,8 @@
 /* ── Secciones ───────────────────────────────────────────────── */
 .seccion {
   padding-top: 5rem;
-  scroll-margin-top: 4rem;
+  /* Negativo: compensa parte del padding, para que el título de la sección quede bajo la cabecera. */
+  scroll-margin-top: -3rem;
 }
 
 .seccion-cabeza {

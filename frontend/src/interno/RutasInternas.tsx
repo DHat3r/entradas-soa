@@ -20,7 +20,7 @@ export function RutasInternas() {
       <Route path="ingresar" element={<IngresarInternoPage />} />
       <Route
         element={
-          // El div da el fondo oscuro también al aviso de acceso denegado que RequiereRol muestra sin barra.
+          // El div da el fondo del tema también al aviso de acceso denegado que RequiereRol muestra sin barra.
           <div className="in-pagina in-envoltura">
             <RequiereRol roles={["organizador", "validador"]} ingreso="/interno/ingresar">
               <LayoutInterno />
