@@ -1,5 +1,6 @@
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useSesion } from "../lib/sesion";
+import { BotonTema } from "../lib/tema";
 import "./interno.css";
 
 export function LayoutInterno() {
@@ -16,7 +17,7 @@ export function LayoutInterno() {
     <div className="in-pagina">
       <aside className="in-barra">
         <Link to="/interno" className="in-marca">
-          <img src="/icono.svg" alt="" />
+          <i className="logo" aria-hidden="true" />
           Taquilla Interno
         </Link>
 
@@ -32,6 +33,7 @@ export function LayoutInterno() {
 
         <div className="in-usuario">
           <span>{usuario?.nombre}</span>
+          <BotonTema />
           <button type="button" className="boton boton-borde" onClick={cerrarSesion}>
             Salir
           </button>

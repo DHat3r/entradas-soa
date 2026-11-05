@@ -6,7 +6,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 import { api, type Rol, type Usuario } from "./api";
 
 interface Sesion {
@@ -73,7 +73,7 @@ export function RequiereRol({
   if (!roles.includes(usuario.rol)) {
     return (
       <div className="aviso aviso-error" role="alert">
-        Tu cuenta no tiene acceso a esta sección.
+        Tu cuenta no tiene acceso a esta sección. <Link to="/">Volver al inicio</Link>
       </div>
     );
   }

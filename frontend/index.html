@@ -3,9 +3,28 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#06110d" />
     <meta name="description" content="Compra entradas para eventos en Chile." />
     <link rel="icon" type="image/svg+xml" href="/icono.svg" />
     <title>Taquilla</title>
+    <script>
+      // Va aquí, antes de pintar, para que el tema no parpadee al cargar.
+      (function () {
+        var guardado = null;
+        var sistemaClaro = false;
+        try {
+          guardado = localStorage.getItem("tema");
+        } catch (e) {}
+        try {
+          sistemaClaro = matchMedia("(prefers-color-scheme: light)").matches;
+        } catch (e) {}
+        var claro = guardado === "claro" || guardado === "oscuro" ? guardado === "claro" : sistemaClaro;
+        document.documentElement.dataset.tema = claro ? "claro" : "oscuro";
+        if (claro) {
+          document.querySelector('meta[name="theme-color"]').content = "#f4eadd";
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

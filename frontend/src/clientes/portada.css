@@ -1,0 +1,674 @@
+/* Layout de clientes y portada. El resto de las pantallas está en clientes.css. */
+.cl-pagina {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  overflow-x: clip;
+}
+
+/* El resplandor detrás del hero: su color depende del tema. */
+.cl-pagina::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: -1;
+  height: 900px;
+  background:
+    radial-gradient(ellipse 60% 55% at 62% 18%, var(--resplandor-1), transparent 70%),
+    radial-gradient(ellipse 45% 40% at 12% 0%, var(--resplandor-2), transparent 70%);
+  pointer-events: none;
+}
+
+/* ── Cabecera ────────────────────────────────────────────────── */
+.cl-cabecera {
+  position: sticky;
+  top: 12px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: min(1120px, calc(100% - 2rem));
+  margin: 12px auto 0;
+  padding: 0.5rem 0.6rem 0.5rem 1rem;
+  border: 1px solid var(--borde);
+  border-radius: 999px;
+  background: var(--cabecera-fondo);
+  backdrop-filter: blur(12px);
+}
+
+.cl-marca {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  text-decoration: none;
+}
+
+.cl-marca .logo {
+  width: 24px;
+  height: 24px;
+}
+
+.cl-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.cl-nav a:not(.boton),
+.cl-nav button:not(.boton, .boton-tema) {
+  padding: 0.5rem 0.65rem;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--texto-suave);
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.cl-nav a:not(.boton):hover,
+.cl-nav button:not(.boton, .boton-tema):hover {
+  color: var(--texto);
+}
+
+.cl-nav .boton {
+  min-height: 38px;
+  margin-left: 0.25rem;
+  padding: 0.35rem 1rem;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.cl-contenido {
+  flex: 1;
+  width: min(1120px, 100%);
+  margin: 0 auto;
+  padding: 0 1rem 5rem;
+}
+
+/* Avisos que son todo el contenido de la página: sin esto quedan pegados a la cabecera. */
+.cl-contenido > .aviso,
+.cl-contenido > .vacio {
+  margin-top: 2.5rem;
+}
+
+/* ── Hero ────────────────────────────────────────────────────── */
+.hero {
+  display: grid;
+  gap: 3rem;
+  align-items: center;
+  padding: 3.5rem 0 3rem;
+}
+
+.hero-pastilla {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 1.25rem;
+  padding: 0.25rem 0.7rem;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: 999px;
+  background: var(--superficie);
+  color: var(--acento-claro);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.hero-pastilla::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--acento);
+}
+
+.hero h1 {
+  font-size: clamp(3rem, 10vw, 5.5rem);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+
+.hero-bloque {
+  display: inline-block;
+  margin: 0.16em 0 0.08em -0.05em;
+  padding: 0.04em 0.22em 0.08em 0.16em;
+  border-radius: 6px;
+  background: var(--acento);
+  color: var(--sobre-acento);
+  font-style: italic;
+  transform: skewX(-4deg);
+}
+
+.hero-texto {
+  max-width: 44ch;
+  margin-top: 1.5rem;
+  color: var(--texto-suave);
+  font-size: 1.125rem;
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 2rem;
+}
+
+/* ── Entrada de muestra: ilustración, no una entrada real ───── */
+.muestra {
+  position: relative;
+  width: min(380px, 100%);
+  margin: 0 auto;
+  padding: 1.5rem;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-grande);
+  background: linear-gradient(160deg, var(--superficie-alta), var(--superficie));
+  box-shadow:
+    0 30px 80px var(--sombra-fuerte),
+    0 0 90px var(--resplandor-tarjeta);
+}
+
+.muestra-rotulo {
+  color: var(--acento-claro);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.muestra-titulo {
+  margin-top: 0.3rem;
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.muestra-detalle {
+  color: var(--texto-suave);
+  font-size: 0.875rem;
+}
+
+.muestra-qr {
+  display: block;
+  width: 100%;
+  max-width: 200px;
+  margin: 1.25rem auto 0;
+  padding: 12px;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.muestra-sello {
+  position: absolute;
+  right: -10px;
+  bottom: 28px;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.9rem 0.55rem 0.6rem;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: 14px;
+  background: var(--superficie-alta);
+  box-shadow: 0 14px 40px var(--sombra-fuerte);
+}
+
+.muestra-sello i {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: var(--acento);
+  color: var(--sobre-acento);
+  font-style: normal;
+  font-weight: 800;
+}
+
+.muestra-sello small {
+  display: block;
+  color: var(--acento-claro);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.muestra-sello strong {
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+/* ── Franja de datos ─────────────────────────────────────────── */
+.franja {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+  margin: 1rem 0 0;
+  padding: 1.5rem 0;
+  border-block: 1px solid var(--borde);
+  list-style: none;
+}
+
+.franja strong {
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.franja span {
+  color: var(--texto-suave);
+  font-size: 0.875rem;
+}
+
+/* ── Secciones ───────────────────────────────────────────────── */
+.seccion {
+  padding-top: 5rem;
+  /* Negativo: compensa parte del padding, para que el título de la sección quede bajo la cabecera. */
+  scroll-margin-top: -3rem;
+}
+
+.seccion-cabeza {
+  max-width: 620px;
+  margin: 0 auto 2.25rem;
+  text-align: center;
+}
+
+.seccion-cabeza h2 {
+  font-size: clamp(2rem, 6vw, 3rem);
+}
+
+.seccion-cabeza p {
+  margin-top: 0.75rem;
+  color: var(--texto-suave);
+}
+
+/* ── Tarjetas de eventos con forma de entrada ─────────────────── */
+.tarjetas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr));
+  gap: 1.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.boleto {
+  --muesca: 11px;
+  --corte: 92px;
+  display: grid;
+  grid-template-columns: var(--corte) 1fr;
+  height: 100%;
+  border-radius: 14px;
+  /* Los semicírculos son el troquel del papel: se recortan del fondo de la tarjeta. */
+  background:
+    radial-gradient(circle at var(--corte) 0, transparent var(--muesca), var(--superficie-alta) 0)
+      top / 100% 51% no-repeat,
+    radial-gradient(circle at var(--corte) 100%, transparent var(--muesca), var(--superficie-alta) 0)
+      bottom / 100% 50% no-repeat;
+  color: inherit;
+  text-decoration: none;
+  transition:
+    transform 140ms,
+    filter 140ms;
+}
+
+a.boleto:hover {
+  transform: translateY(-3px);
+  filter: drop-shadow(0 12px 28px var(--brillo-acento));
+}
+
+.boleto-fecha {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 0.5rem;
+}
+
+/* La línea punteada no toca las muescas. */
+.boleto-fecha::after {
+  content: "";
+  position: absolute;
+  top: calc(var(--muesca) + 4px);
+  right: -1px;
+  bottom: calc(var(--muesca) + 4px);
+  border-right: 2px dashed var(--borde-fuerte);
+}
+
+.boleto-dia {
+  color: var(--acento);
+  font-size: 2.4rem;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.boleto-mes {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.boleto-cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+  padding: 1.1rem 1.1rem 1rem;
+}
+
+.boleto-cuerpo h3 {
+  font-size: 1.25rem;
+  overflow-wrap: anywhere;
+}
+
+.boleto-lugar {
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+}
+
+.boleto-precio {
+  margin-top: auto;
+  padding-top: 0.6rem;
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+}
+
+.boleto-precio strong {
+  color: var(--texto);
+  font-weight: 700;
+}
+
+/* ── Cómo funciona ───────────────────────────────────────────── */
+.ventajas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 1.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ventaja {
+  height: 100%;
+  padding: 1.5rem;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-grande);
+  background: var(--superficie);
+}
+
+.ventaja-icono {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  margin-bottom: 1.25rem;
+  border-radius: 12px;
+  background: var(--seleccion-fondo);
+  color: var(--acento);
+}
+
+.ventaja-icono svg {
+  width: 22px;
+  height: 22px;
+}
+
+.ventaja h3 {
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+}
+
+.ventaja p {
+  margin-top: 0.5rem;
+  color: var(--texto-suave);
+  font-size: 0.925rem;
+}
+
+/* ── Bloque destacado ────────────────────────────────────────── */
+.bloque {
+  display: grid;
+  gap: 2.5rem;
+  align-items: center;
+  padding: 2rem 1.5rem;
+  border: 1px solid var(--borde);
+  border-radius: 28px;
+  background: linear-gradient(120deg, var(--superficie), var(--bloque-medio) 60%, var(--superficie-alta));
+}
+
+.bloque h2 {
+  font-size: clamp(2rem, 6vw, 3rem);
+}
+
+.bloque-texto {
+  max-width: 46ch;
+  margin-top: 1rem;
+  color: var(--texto-suave);
+}
+
+.lista-chequeo {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  font-size: 0.95rem;
+  list-style: none;
+}
+
+.lista-chequeo li {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.lista-chequeo li::before {
+  content: "✓";
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--seleccion-fondo);
+  color: var(--acento);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.reserva-muestra {
+  width: min(360px, 100%);
+  margin: 0 auto;
+  padding: 1.5rem;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-grande);
+  background: var(--fondo);
+  box-shadow: 0 24px 60px var(--sombra-suave);
+}
+
+.reserva-muestra dl {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem 1rem;
+  margin: 1rem 0 0;
+  font-size: 0.925rem;
+}
+
+.reserva-muestra dt {
+  color: var(--texto-suave);
+}
+
+.reserva-muestra dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+}
+
+.reserva-muestra-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--borde-fuerte);
+  font-weight: 600;
+}
+
+.reserva-muestra-total strong {
+  font-size: 1.7rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+/* ── Llamada final ───────────────────────────────────────────── */
+.llamada {
+  padding: 6rem 0 1rem;
+  text-align: center;
+}
+
+.llamada h2 {
+  font-size: clamp(2.5rem, 9vw, 4.5rem);
+  font-weight: 900;
+  letter-spacing: -0.05em;
+}
+
+.llamada p {
+  max-width: 48ch;
+  margin: 1.25rem auto 0;
+  color: var(--texto-suave);
+}
+
+.llamada .acciones {
+  justify-content: center;
+}
+
+/* ── Pie ─────────────────────────────────────────────────────── */
+.cl-pie {
+  border-top: 1px solid var(--borde);
+}
+
+.cl-pie-interior {
+  display: grid;
+  gap: 2rem;
+  width: min(1120px, 100%);
+  margin: 0 auto;
+  padding: 3rem 1rem 2rem;
+}
+
+.cl-pie-marca p {
+  max-width: 32ch;
+  margin-top: 0.75rem;
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+}
+
+.cl-pie-columnas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 1.5rem;
+}
+
+.cl-pie h2 {
+  margin-bottom: 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.cl-pie ul {
+  display: grid;
+  gap: 0.15rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cl-pie li a {
+  display: inline-block;
+  padding: 0.25rem 0;
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.cl-pie li a:hover {
+  color: var(--acento-claro);
+}
+
+.cl-pie-legal {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--borde);
+  color: var(--texto-suave);
+  font-size: 0.8rem;
+}
+
+@media (min-width: 620px) {
+  .franja {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (min-width: 860px) {
+  .hero {
+    grid-template-columns: 1.15fr 1fr;
+    padding: 5rem 0 4rem;
+  }
+
+  .bloque {
+    grid-template-columns: 1.1fr 1fr;
+    padding: 3.5rem;
+  }
+
+  .cl-pie-interior {
+    grid-template-columns: 1fr 1.6fr;
+  }
+}
+
+@media (max-width: 460px) {
+  /* Aquí no cabe en la cabecera: el botón de tema queda solo en el pie. */
+  .cl-cabecera .boton-tema {
+    display: none;
+  }
+
+  .muestra-sello {
+    right: 8px;
+  }
+
+}
+
+/* En pantallas muy angostas no caben marca, "Ingresar" y "Crear cuenta": queda solo el logo. */
+@media (max-width: 380px) {
+  .cl-cabecera {
+    gap: 0.5rem;
+    padding-left: 0.75rem;
+  }
+
+  .cl-cabecera .cl-marca span {
+    display: none;
+  }
+
+  .cl-nav a:not(.boton),
+  .cl-nav button:not(.boton, .boton-tema) {
+    padding-inline: 0.4rem;
+  }
+
+  .cl-nav .boton {
+    padding-inline: 0.75rem;
+  }
+}

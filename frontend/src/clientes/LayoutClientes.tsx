@@ -1,6 +1,9 @@
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import { useSesion } from "../lib/sesion";
+import { BotonTema } from "../lib/tema";
 import "./clientes.css";
+import { PieDePagina } from "./PieDePagina";
+import "./portada.css";
 
 export function LayoutClientes() {
   const { usuario, salir } = useSesion();
@@ -14,11 +17,18 @@ export function LayoutClientes() {
   return (
     <div className="cl-pagina">
       <header className="cl-cabecera">
-        <Link to="/" className="cl-marca">
-          <img src="/icono.svg" alt="" />
-          Taquilla
+        {/* Ya estando en la portada, la ruta no cambia: por eso el logo sube por su cuenta. */}
+        <Link
+          to="/"
+          className="cl-marca"
+          aria-label="Taquilla, ir al inicio"
+          onClick={() => window.scrollTo({ top: 0 })}
+        >
+          <i className="logo" aria-hidden="true" />
+          <span>Taquilla</span>
         </Link>
         <nav className="cl-nav" aria-label="Principal">
+          <BotonTema />
           {usuario ? (
             <>
               {usuario.rol === "cliente" ? (
@@ -31,14 +41,19 @@ export function LayoutClientes() {
               </button>
             </>
           ) : (
-            <Link to="/ingresar">Ingresar</Link>
+            <>
+              <Link to="/ingresar">Ingresar</Link>
+              <Link to="/registro" className="boton boton-acento">
+                Crear cuenta
+              </Link>
+            </>
           )}
         </nav>
       </header>
       <main className="cl-contenido">
         <Outlet />
       </main>
-      <footer className="cl-pie">Proyecto de portafolio. Los pagos son simulados.</footer>
+      <PieDePagina />
     </div>
   );
 }

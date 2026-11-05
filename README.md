@@ -12,8 +12,11 @@ Hay dos sistemas en la misma web: clientes (`/`) e interno (`/interno`).
 
 ### Sistema de clientes
 
-![Portada con los próximos eventos en tarjetas con forma de entrada](docs/capturas/portada.png)
-*Portada: los próximos eventos a la venta.*
+![Portada con el título, los datos clave de la compra y una entrada de ejemplo](docs/capturas/portada.png)
+*Portada: qué ofrece y cómo se ve una entrada.*
+
+![Próximos eventos en tarjetas oscuras con forma de entrada troquelada](docs/capturas/eventos.png)
+*Próximos eventos: cada tarjeta tiene las muescas de una entrada de papel.*
 
 ![Página de un evento con sectores, precios, cupos disponibles y el total](docs/capturas/evento.png)
 *Evento: el cliente elige sector y cantidad, y ve el total antes de reservar.*
@@ -25,6 +28,13 @@ Hay dos sistemas en la misma web: clientes (`/`) e interno (`/interno`).
 
 *Mis entradas en el celular: cada entrada tiene su QR y su estado.*
 
+### Dos temas
+
+La web sigue la preferencia del sistema operativo la primera vez, y después recuerda la que elijas con el botón de tema.
+
+![Portada en modo claro, en café claro con blanco pastel](docs/capturas/portada-claro.png)
+*Modo claro: café claro con blanco pastel.*
+
 ### Sistema interno
 
 ![Lista de eventos del organizador con cupos apartados o vendidos e ingresos potenciales](docs/capturas/interno-eventos.png)
@@ -32,6 +42,9 @@ Hay dos sistemas en la misma web: clientes (`/`) e interno (`/interno`).
 
 ![Formulario para crear un evento con sus sectores](docs/capturas/interno-nuevo-evento.png)
 *Nuevo evento: se crea en borrador y se publica cuando está listo.*
+
+![Lista de eventos del sistema interno en modo claro](docs/capturas/interno-eventos-claro.png)
+*El sistema interno también tiene modo claro.*
 
 ![Control de la puerta aceptando una entrada válida](docs/capturas/puerta-valida.png)
 *Puerta: una entrada válida puede pasar.*
@@ -152,8 +165,8 @@ Cantidad de tests por carpeta, contada con `python -m pytest --collect-only -q` 
 | `services/notificaciones` | 7 |
 | **Subtotal Python** | **136** |
 | `e2e` (necesita el stack) | 6 |
-| `frontend` (Vitest) | 17 |
-| **Total** | **159** |
+| `frontend` (Vitest) | 35 |
+| **Total** | **177** |
 
 `libs/basedatos` no tiene tests propios.
 

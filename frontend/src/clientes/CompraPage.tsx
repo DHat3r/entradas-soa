@@ -130,7 +130,7 @@ export function CompraPage() {
         </dd>
       </Resumen>
       {errorPago && (
-        <p className="aviso aviso-error" role="alert" style={{ marginTop: "1rem" }}>
+        <p className="aviso aviso-error aviso-pago" role="alert">
           {errorPago}
         </p>
       )}

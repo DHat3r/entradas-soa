@@ -7,6 +7,8 @@ import { LayoutClientes } from "./clientes/LayoutClientes";
 import { MisEntradasPage } from "./clientes/MisEntradasPage";
 import { RutasInternas } from "./interno/RutasInternas";
 import { ProveedorDeSesion, RequiereRol } from "./lib/sesion";
+import { SubirAlNavegar } from "./lib/SubirAlNavegar";
+import { ProveedorDeTema } from "./lib/tema";
 
 function SoloCliente({ children }: { children: React.ReactNode }) {
   return (
@@ -19,34 +21,37 @@ function SoloCliente({ children }: { children: React.ReactNode }) {
 export function App() {
   return (
     <BrowserRouter>
-      <ProveedorDeSesion>
-        <Routes>
-          <Route path="/interno/*" element={<RutasInternas />} />
-          <Route element={<LayoutClientes />}>
-            <Route index element={<EventosPage />} />
-            <Route path="eventos/:id" element={<EventoPage />} />
-            <Route path="ingresar" element={<IngresarPage />} />
-            <Route path="registro" element={<RegistroPage />} />
-            <Route
-              path="reservas/:id"
-              element={
-                <SoloCliente>
-                  <CompraPage />
-                </SoloCliente>
-              }
-            />
-            <Route
-              path="mis-entradas"
-              element={
-                <SoloCliente>
-                  <MisEntradasPage />
-                </SoloCliente>
-              }
-            />
-            <Route path="*" element={<p className="vacio">No encontramos esta página.</p>} />
-          </Route>
-        </Routes>
-      </ProveedorDeSesion>
+      <SubirAlNavegar />
+      <ProveedorDeTema>
+        <ProveedorDeSesion>
+          <Routes>
+            <Route path="/interno/*" element={<RutasInternas />} />
+            <Route element={<LayoutClientes />}>
+              <Route index element={<EventosPage />} />
+              <Route path="eventos/:id" element={<EventoPage />} />
+              <Route path="ingresar" element={<IngresarPage />} />
+              <Route path="registro" element={<RegistroPage />} />
+              <Route
+                path="reservas/:id"
+                element={
+                  <SoloCliente>
+                    <CompraPage />
+                  </SoloCliente>
+                }
+              />
+              <Route
+                path="mis-entradas"
+                element={
+                  <SoloCliente>
+                    <MisEntradasPage />
+                  </SoloCliente>
+                }
+              />
+              <Route path="*" element={<p className="vacio">No encontramos esta página.</p>} />
+            </Route>
+          </Routes>
+        </ProveedorDeSesion>
+      </ProveedorDeTema>
     </BrowserRouter>
   );
 }

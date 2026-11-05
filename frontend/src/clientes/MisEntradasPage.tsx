@@ -6,9 +6,9 @@ export function MisEntradasPage() {
   const { datos: entradas, error, cargando } = useCarga(api.misEntradas);
 
   return (
-    <section style={{ paddingTop: "1.5rem" }}>
-      <h1 style={{ fontSize: "clamp(2rem, 6vw, 3rem)", fontWeight: 800, marginBottom: "1.25rem" }}>
-        Mis entradas
+    <section className="mis-entradas">
+      <h1>
+        Mis <span className="destacado">entradas</span>
       </h1>
       {cargando && <p className="cargando">Cargando tus entradas…</p>}
       {error && (
