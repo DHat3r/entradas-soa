@@ -16,7 +16,7 @@ function ejecutar({
   sinMatchMedia?: boolean;
 }) {
   delete document.documentElement.dataset.tema;
-  document.head.innerHTML = '<meta name="theme-color" content="#06110d" />';
+  document.head.innerHTML = '<meta name="theme-color" content="#17122a" />';
   vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
     if (bloqueado) throw new Error("Almacenamiento bloqueado");
     return guardado;
@@ -40,7 +40,7 @@ describe("script de tema de index.html", () => {
 
   it("sigue al sistema la primera vez", () => {
     expect(ejecutar({ sistemaClaro: true })).toEqual({ tema: "claro", color: "#f4eadd" });
-    expect(ejecutar({ sistemaClaro: false })).toEqual({ tema: "oscuro", color: "#06110d" });
+    expect(ejecutar({ sistemaClaro: false })).toEqual({ tema: "oscuro", color: "#17122a" });
   });
 
   it("la elección guardada manda sobre el sistema", () => {

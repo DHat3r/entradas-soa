@@ -3,7 +3,7 @@ import { createContext, useCallback, useContext, useState, type ReactNode } from
 export type Tema = "oscuro" | "claro";
 
 const CLAVE = "tema";
-const COLOR_DE_NAVEGADOR: Record<Tema, string> = { oscuro: "#06110d", claro: "#f4eadd" };
+const COLOR_DE_NAVEGADOR: Record<Tema, string> = { oscuro: "#17122a", claro: "#f4eadd" };
 
 interface ContextoDeTema {
   tema: Tema;

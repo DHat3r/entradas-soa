@@ -50,6 +50,8 @@ La web sigue la preferencia del sistema operativo la primera vez, y después rec
 *Puerta: una entrada válida puede pasar.*
 
 ![Control de la puerta rechazando una entrada ya usada](docs/capturas/puerta-usada.png)
+
+> Capturas del diseño anterior (negro con verde esmeralda) en [docs/capturas/v1](docs/capturas/v1).
 *Puerta: un QR ya usado se rechaza e indica cuándo se usó.*
 
 ## Demo
