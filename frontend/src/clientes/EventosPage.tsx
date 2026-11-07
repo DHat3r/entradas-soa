@@ -52,7 +52,7 @@ function DibujoDeQr() {
   ];
   return (
     <svg className="muestra-qr" viewBox={`0 0 ${lado} ${lado}`} aria-hidden="true">
-      <g fill="#06110d">
+      <g fill="#17122a">
         {celdas.map(([x, y]) => (
           <rect key={`${x}-${y}`} x={x} y={y} width="1" height="1" />
         ))}

@@ -2,35 +2,37 @@
 :root {
   color-scheme: dark;
 
-  --fondo: #06110d;
-  --superficie: #0d1b16;
-  --superficie-alta: #13261f;
-  --seleccion-fondo: #0f3326;
-  --borde: #21372e;
-  --borde-fuerte: #35534a;
-  --borde-control: #5a7a6e;
-  --texto: #f1f7f4;
-  --texto-suave: #a3b5ad;
+  /* Noche de función: sala con las luces apagadas y el dorado de una marquesina. */
+  --fondo: #17122a;
+  --superficie: #201a37;
+  --superficie-alta: #2a2346;
+  --seleccion-fondo: #3a2e52;
+  --borde: #342c52;
+  --borde-fuerte: #4c4274;
+  --borde-control: #7d72a3;
+  --texto: #f7f2ea;
+  --texto-suave: #bcb3d0;
 
-  --acento: #25d695;
-  --acento-claro: #5ce8b5;
-  --sobre-acento: #03140d;
-  --brillo-acento: rgb(37 214 149 / 28%);
-  --resplandor-1: rgb(37 214 149 / 16%);
-  --resplandor-2: rgb(37 214 149 / 7%);
-  --resplandor-tarjeta: rgb(37 214 149 / 12%);
-  --cabecera-fondo: rgb(13 27 22 / 82%);
-  --bloque-medio: #0a1713;
-  --sombra-suave: rgb(0 0 0 / 45%);
-  --sombra-fuerte: rgb(0 0 0 / 50%);
+  --acento: #ffb547;
+  --acento-claro: #ffcb7d;
+  --sobre-acento: #23170a;
+  --brillo-acento: rgb(255 181 71 / 30%);
+  --resplandor-1: rgb(255 181 71 / 15%);
+  /* Segundo foco del hero: luz de escenario magenta. */
+  --resplandor-2: rgb(222 92 150 / 13%);
+  --resplandor-tarjeta: rgb(255 181 71 / 12%);
+  --cabecera-fondo: rgb(32 26 55 / 82%);
+  --bloque-medio: #1c1631;
+  --sombra-suave: rgb(5 2 15 / 45%);
+  --sombra-fuerte: rgb(5 2 15 / 55%);
   --logo: url("/icono.svg");
 
-  --exito: #7bebbf;
-  --exito-fondo: #0f3326;
+  --exito: #8fe3b4;
+  --exito-fondo: #1c3a2e;
   --error: #ffb4a6;
-  --error-fondo: #3c1711;
+  --error-fondo: #3d1a24;
   --aviso: #f5d58a;
-  --aviso-fondo: #33280d;
+  --aviso-fondo: #35290f;
 
   --titulos: "Inter Variable", system-ui, sans-serif;
   --cuerpo: "Inter Variable", system-ui, sans-serif;
